@@ -60,9 +60,9 @@ export function ReviewPanel({ pending, dismissed, onChanged }: { pending: Tx[]; 
         const ids = g.txs.map((t) => t.id);
         const all = ids.every((id) => sel.has(id));
         return (
-          <Card key={g.name}>
+          <Card key={g.key}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0">
-              <CardTitle className="text-lg">{g.name}</CardTitle>
+              <CardTitle className="text-lg">{g.name} <span className="text-sm font-normal text-muted-foreground">{g.direction === "in" ? "· client (vente)" : "· fournisseur (achat)"}</span></CardTitle>
               <Button variant="ghost" size="sm" onClick={() => toggle(ids, !all)}>
                 {all ? "Tout décocher" : "Tout cocher"}
               </Button>

@@ -45,18 +45,26 @@ export type Tx = {
   comment: string | null;
   review_state?: string;
   counterpart_accounts?: string | null;
+  direction: "out" | "in";
 };
 
-export type SupplierGroup = { name: string; txs: Tx[]; total: number; state: "todo" | "progress" | "done" };
+export type SupplierGroup = { key: string; direction: "out" | "in"; name: string; txs: Tx[]; total: number; state: "todo" | "progress" | "done" };
 
 export function groupBySupplier(txs: Tx[]): SupplierGroup[] {
   const map = new Map<string, Tx[]>();
-  for (const t of txs) map.set(t.supplier, [...(map.get(t.supplier) ?? []), t]);
+  for (const t of txs) {
+    const k = `${t.direction === "in" ? "vente" : "achat"}:${t.supplier}`;
+    map.set(k, [...(map.get(k) ?? []), t]);
+  }
   return [...map.entries()]
     .sort((a, b) => a[0].localeCompare(b[0], "fr"))
-    .map(([name, list]) => {
+    .map(([key, list]) => {
+      const direction = key.startsWith("vente:") ? ("in" as const) : ("out" as const);
+      const name = list[0]!.supplier;
       const done = list.filter((t) => t.status !== "a_faire").length;
       return {
+        key,
+        direction,
         name,
         txs: list.sort((a, b) => a.date.localeCompare(b.date)),
         total: list.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),

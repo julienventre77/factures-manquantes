@@ -42,7 +42,7 @@ function SupplierPage() {
   const qc = useQueryClient();
   const { txs, dossierId } = useClientTxs();
   const groups = groupBySupplier(txs.data ?? []);
-  const idx = groups.findIndex((g) => g.name === supplier);
+  const idx = groups.findIndex((g) => g.key === supplier);
   const group = groups[idx];
   const [mode, setMode] = useState<"upload" | "email" | null>(null);
   const [noInvoiceTx, setNoInvoiceTx] = useState<Tx | null>(null);
@@ -51,7 +51,7 @@ function SupplierPage() {
   const dossier = useQuery({
     queryKey: ["dossier", dossierId],
     enabled: !!dossierId,
-    queryFn: async () => (await supabase.from("dossiers").select("name, collect_email").eq("id", dossierId!).single()).data,
+    queryFn: async () => (await supabase.from("dossiers").select("name, collect_email, collect_email_customers").eq("id", dossierId!).single()).data,
   });
 
   const refresh = () => qc.invalidateQueries({ queryKey: ["client-txs"] });
@@ -96,7 +96,7 @@ function SupplierPage() {
 
   function next() {
     const nextG = groups.slice(idx + 1).find((g) => g.state !== "done") ?? groups.find((g, i) => i !== idx && g.state !== "done");
-    if (nextG) navigate({ to: "/espace/$supplier", params: { supplier: nextG.name } });
+    if (nextG) navigate({ to: "/espace/$supplier", params: { supplier: nextG.key } });
     else navigate({ to: "/espace/termine" });
     setMode(null);
   }
@@ -113,18 +113,20 @@ function SupplierPage() {
     );
 
   const pending = group.txs.filter((t) => t.status === "a_faire");
-  const collect = dossier.data?.collect_email;
+  const isSale = group.direction === "in";
+  const collect = isSale ? dossier.data?.collect_email_customers : dossier.data?.collect_email;
+  const noun = isSale ? "encaissement" : "paiement";
 
   return (
     <div className="min-h-screen pb-28">
       <AppHeader />
       <main className="mx-auto max-w-2xl px-4 py-6">
         <Link to="/espace" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Tous les fournisseurs
+          <ArrowLeft className="h-4 w-4" /> Retour à la liste
         </Link>
         <h1 className="mt-3 text-3xl font-semibold">{group.name}</h1>
         <p className="text-muted-foreground">
-          {group.txs.length} paiement{group.txs.length > 1 ? "s" : ""} · {formatEUR(group.total)}
+          {isSale ? "Votre client" : "Fournisseur"} · {group.txs.length} {noun}{group.txs.length > 1 ? "s" : ""} · {formatEUR(group.total)}
         </p>
 
         <div className="mt-6 space-y-3">
@@ -151,7 +153,7 @@ function SupplierPage() {
                 label={`Glissez ici une ou plusieurs factures (PDF, JPG, PNG)`}
                 hint={
                   pending.length > 1
-                    ? "Les fichiers sont associés aux paiements dans l'ordre des dates. Vous pouvez aussi déposer un fichier sur chaque paiement ci-dessus."
+                    ? `Les fichiers sont associés aux ${noun}s dans l'ordre des dates. Vous pouvez aussi déposer un fichier sur chaque ligne ci-dessus.`
                     : undefined
                 }
                 onFiles={(f) => uploadFiles(f, pending)}
@@ -173,7 +175,11 @@ function SupplierPage() {
                       </Button>
                     </div>
                     <ul className="mt-4 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-                      <li>Dans votre compte {group.name}, ajoutez cette adresse comme e-mail de réception des factures : elles nous arriveront automatiquement.</li>
+                      {isSale ? (
+                        <li>Depuis votre logiciel de facturation, ajoutez cette adresse en copie lorsque vous envoyez une facture à {group.name}.</li>
+                      ) : (
+                        <li>Dans votre compte {group.name}, ajoutez cette adresse comme e-mail de réception des factures : elles nous arriveront automatiquement.</li>
+                      )}
                       <li>Ou transférez simplement les e-mails contenant vos factures à cette adresse.</li>
                     </ul>
                     <Button size="xl" className="mt-4" onClick={markEmail}>
@@ -194,7 +200,7 @@ function SupplierPage() {
       <div className="fixed inset-x-0 bottom-0 border-t bg-card p-4">
         <div className="mx-auto max-w-2xl">
           <Button size="xl" className="sm:w-full" onClick={next}>
-            Fournisseur suivant <ArrowRight />
+            Suivant <ArrowRight />
           </Button>
         </div>
       </div>

@@ -127,13 +127,13 @@ function DossierPage() {
         />
 
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">Envoyés au client — fournisseurs ({groups.length})</h2>
+          <h2 className="text-2xl font-semibold">Envoyés au client — tiers ({groups.length})</h2>
           {groups.length === 0 && <p className="text-muted-foreground">Aucune demande en cours.</p>}
           {groups.map((g) => (
-            <Card key={g.name}>
+            <Card key={g.key}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <CardTitle className="text-lg">{g.name}</CardTitle>
-                <span className="text-sm text-muted-foreground">{g.txs.length} · {formatEUR(g.total)} · {g.state === "done" ? "Terminé" : g.state === "progress" ? "En cours" : "À faire"}</span>
+                <span className="text-sm text-muted-foreground">{g.direction === "in" ? "Client (vente)" : "Fournisseur (achat)"} · {g.txs.length} · {formatEUR(g.total)} · {g.state === "done" ? "Terminé" : g.state === "progress" ? "En cours" : "À faire"}</span>
               </CardHeader>
               <CardContent className="space-y-3">
                 {g.txs.map((t) => (
@@ -167,11 +167,11 @@ function DossierPage() {
   );
 }
 
-function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: string; company_id: string; collect_email: string | null }; onSaved: () => void }) {
-  const [f, setF] = useState({ name: dossier.name, company_id: dossier.company_id, collect_email: dossier.collect_email ?? "" });
+function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: string; company_id: string; collect_email: string | null; collect_email_customers: string | null }; onSaved: () => void }) {
+  const [f, setF] = useState({ name: dossier.name, company_id: dossier.company_id, collect_email: dossier.collect_email ?? "", collect_email_customers: dossier.collect_email_customers ?? "" });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("dossiers").update({ ...f, collect_email: f.collect_email || null }).eq("id", dossier.id);
+    const { error } = await supabase.from("dossiers").update({ ...f, collect_email: f.collect_email || null, collect_email_customers: f.collect_email_customers || null }).eq("id", dossier.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Dossier enregistré");
     onSaved();
@@ -183,8 +183,10 @@ function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: st
         <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
           <div className="space-y-1"><Label>Nom</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
           <div className="space-y-1"><Label>company_id Pennylane</Label><Input value={f.company_id} onChange={(e) => setF({ ...f, company_id: e.target.value })} /></div>
-          <div className="space-y-1"><Label>Adresse de collecte Pennylane</Label>
+          <div className="space-y-1"><Label>Adresse de collecte achats</Label>
             <Input type="email" placeholder="nom-du-dossier-XXXX@suppliers.pennylane.com" value={f.collect_email} onChange={(e) => setF({ ...f, collect_email: e.target.value })} /></div>
+          <div className="space-y-1"><Label>Adresse de collecte ventes</Label>
+            <Input type="email" placeholder="nom-du-dossier-XXXX@customers.pennylane.com" value={f.collect_email_customers} onChange={(e) => setF({ ...f, collect_email_customers: e.target.value })} /></div>
           <Button type="submit" variant="secondary" className="sm:col-span-3 sm:justify-self-start">Enregistrer</Button>
         </form>
       </CardContent>
