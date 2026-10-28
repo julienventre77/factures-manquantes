@@ -17,3 +17,4 @@
 - Transactions no longer requiring a document are set `is_open=false` by sync, not deleted, to keep client answers/history.
 - Never store third-party supplier credentials (GDPR requirement).
 - Pennylane sync uses the MCP server first (`src/lib/mcp.server.ts`, OAuth tokens AES-GCM-encrypted in locked table `mcp_connection`), API v2 only as fallback — one detection function shared by both so results stay identical.
+- pkce-challenge is aliased in vite.config.ts to its browser build because it exports no workerd condition (build fails otherwise).
