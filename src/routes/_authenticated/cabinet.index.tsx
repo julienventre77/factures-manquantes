@@ -18,6 +18,7 @@ import { requireCabinet, formatEUR } from "@/lib/session";
 import { formatSyncDate, isToday } from "@/lib/dates";
 import { normalizeSearch } from "@/lib/priority";
 import { McpPanel } from "@/components/McpPanel";
+import { CabinetChat } from "@/components/CabinetChat";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/cabinet/")({
@@ -117,8 +118,8 @@ function Cabinet() {
     .sort(compareBy(get[sort.key], sort.dir));
 
   return (
-    <div className="space-cabinet min-h-screen bg-background">
-      <AppHeader space="cabinet" />
+    <div className="space-cabinet min-h-screen bg-background pb-24">
+      <AppHeader space="cabinet" /><CabinetChat dossierId={null} />
       <main className="mx-auto max-w-7xl space-y-5 px-4 py-6 sm:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>

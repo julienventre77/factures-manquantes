@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LinesTable } from "@/components/LinesTable";
 import { QuestionsPanel } from "@/components/QuestionsPanel";
+import { CabinetChat } from "@/components/CabinetChat";
 import { SourcePill } from "@/components/StatusPill";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
@@ -88,8 +89,8 @@ function DossierPage() {
   const { dossier, members, txs, uploads } = q.data;
 
   return (
-    <div className="space-cabinet min-h-screen bg-background">
-      <AppHeader space="cabinet" />
+    <div className="space-cabinet min-h-screen bg-background pb-24">
+      <AppHeader space="cabinet" /><CabinetChat dossierId={dossierId} />
       <main className="mx-auto max-w-7xl space-y-5 px-4 py-6">
         <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 text-sm">
           <Link to="/cabinet" className="font-semibold text-primary hover:underline">Dossiers clients</Link>
