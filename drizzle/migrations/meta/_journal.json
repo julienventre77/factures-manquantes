@@ -22,6 +22,13 @@
       "when": 1793218200872,
       "tag": "0002_tx_counterpart",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793218515225,
+      "tag": "0003_direction_and_customer_email",
+      "breakpoints": true
     }
   ]
 }

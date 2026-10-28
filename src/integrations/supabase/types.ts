@@ -49,6 +49,7 @@ export type Database = {
       dossiers: {
         Row: {
           collect_email: string | null
+          collect_email_customers: string | null
           company_id: string
           created_at: string
           id: string
@@ -58,6 +59,7 @@ export type Database = {
         }
         Insert: {
           collect_email?: string | null
+          collect_email_customers?: string | null
           company_id: string
           created_at?: string
           id?: string
@@ -67,6 +69,7 @@ export type Database = {
         }
         Update: {
           collect_email?: string | null
+          collect_email_customers?: string | null
           company_id?: string
           created_at?: string
           id?: string
@@ -112,6 +115,7 @@ export type Database = {
           counterpart_accounts: string | null
           created_at: string
           date: string
+          direction: string
           dossier_id: string
           id: string
           is_open: boolean
@@ -129,6 +133,7 @@ export type Database = {
           counterpart_accounts?: string | null
           created_at?: string
           date: string
+          direction?: string
           dossier_id: string
           id?: string
           is_open?: boolean
@@ -146,6 +151,7 @@ export type Database = {
           counterpart_accounts?: string | null
           created_at?: string
           date?: string
+          direction?: string
           dossier_id?: string
           id?: string
           is_open?: boolean
