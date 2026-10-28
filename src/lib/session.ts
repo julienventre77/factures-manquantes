@@ -44,6 +44,7 @@ export type Tx = {
   status: "a_faire" | "depose" | "email" | "sans_facture";
   comment: string | null;
   review_state?: string;
+  counterpart_accounts?: string | null;
 };
 
 export type SupplierGroup = { name: string; txs: Tx[]; total: number; state: "todo" | "progress" | "done" };

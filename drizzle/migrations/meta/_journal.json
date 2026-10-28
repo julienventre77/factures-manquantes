@@ -15,6 +15,13 @@
       "when": 1793218043249,
       "tag": "0001_cabinet_review",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793218200872,
+      "tag": "0002_tx_counterpart",
+      "breakpoints": true
     }
   ]
 }
