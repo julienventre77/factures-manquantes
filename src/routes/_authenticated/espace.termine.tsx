@@ -16,7 +16,7 @@ export const Route = createFileRoute("/_authenticated/espace/termine")({
     ],
   }),
   component: () => (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <AppHeader /><HelpChat />
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
         <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-success" />

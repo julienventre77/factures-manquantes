@@ -58,7 +58,7 @@ function Espace() {
   const pct = all.length ? Math.round(((all.length - remaining) / all.length) * 100) : 100;
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen pb-28">
       <AppHeader /><HelpChat />
       <main className="mx-auto max-w-2xl px-4 py-8">
         {me.data && !me.data.dossierId ? (
