@@ -44,6 +44,13 @@ export async function syncDossier(dossierId: string) {
   if (dErr || !dossier) throw new Error("Dossier introuvable");
 
   try {
+    // Guard: a company-bound token ignores X-Company-Id, so it must match this dossier.
+    const me = await pl<{ company?: { id: number } | null }>("/me", dossier.company_id, token);
+    if (me.company?.id && String(me.company.id) !== String(dossier.company_id).trim())
+      throw new Error(
+        `Le jeton Pennylane est lié à l'entreprise ${me.company.id}, pas au company_id ${dossier.company_id} de ce dossier.`,
+      );
+
     // 1. Outgoing transactions requiring a document
     const since = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10);
     const filter = encodeURIComponent(JSON.stringify([{ field: "date", operator: "gteq", value: since }]));
