@@ -4,14 +4,14 @@ import { LogOut, FileCheck2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 
-export function AppHeader({ subtitle }: { subtitle?: string }) {
+export function AppHeader({ space }: { space: "client" | "cabinet" }) {
   const navigate = useNavigate();
   const qc = useQueryClient();
   async function signOut() {
     await qc.cancelQueries();
     qc.clear();
     await supabase.auth.signOut();
-    navigate({ to: "/", replace: true });
+    navigate({ to: space === "cabinet" ? "/cabinet/connexion" : "/", replace: true });
   }
   return (
     <header className="border-b bg-card">
@@ -20,7 +20,7 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
           <FileCheck2 className="h-6 w-6 text-primary" />
           <div>
             <div className="font-serif text-lg font-semibold leading-none">PBC List</div>
-            {subtitle && <div className="text-xs text-muted-foreground">{subtitle}</div>}
+            <div className="text-xs font-medium text-muted-foreground">{space === "cabinet" ? "Espace cabinet" : "Espace client"}</div>
           </div>
         </div>
         <Button variant="ghost" size="sm" onClick={signOut}>
