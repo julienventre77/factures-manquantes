@@ -64,7 +64,7 @@ function DossierPage() {
     setSyncing(true);
     try {
       const r = await syncDossierNow({ data: { dossierId } });
-      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouveau(x) paiement(s) à valider, ${r.closed} justifiée(s) entre-temps.`);
+      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouveau(x) paiement(s) à valider, ${r.closed} justifiée(s) entre-temps. Source : ${r.source}.`);
       reload();
     } catch (e) {
       toast.error((e as Error).message);

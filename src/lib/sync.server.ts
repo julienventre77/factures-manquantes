@@ -168,7 +168,7 @@ export async function syncDossier(dossierId: string) {
         await db.from("dossiers").update({ last_mcp_error: e.message }).eq("id", dossierId);
         throw e;
       }
-      mcpError = e instanceof mcp.McpUnavailable ? (e as Error).message : `Erreur MCP : ${(e as Error).message.slice(0, 200)}`;
+      mcpError = e instanceof mcp.McpUnavailable ? (e as Error).message : (e as Error).message.slice(0, 200);
       console.error("MCP sync failed, API fallback");
       source = "API (secours)";
       result = await fetchViaApi(dossier, since);
