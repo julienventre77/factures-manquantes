@@ -14,6 +14,82 @@ export type Database = {
   }
   public: {
     Tables: {
+      cabinet_questions: {
+        Row: {
+          context: string | null
+          created_at: string
+          dossier_id: string
+          handled: boolean
+          id: string
+          question: string
+          user_email: string | null
+          user_id: string
+        }
+        Insert: {
+          context?: string | null
+          created_at?: string
+          dossier_id: string
+          handled?: boolean
+          id?: string
+          question: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Update: {
+          context?: string | null
+          created_at?: string
+          dossier_id?: string
+          handled?: boolean
+          id?: string
+          question?: string
+          user_email?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinet_questions_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          dossier_id: string
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          dossier_id: string
+          id?: string
+          role: string
+          user_id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          dossier_id?: string
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dossier_members: {
         Row: {
           created_at: string
