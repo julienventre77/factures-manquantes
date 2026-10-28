@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { HelpChat } from "@/components/HelpChat";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,7 +59,7 @@ function Espace() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader />
+      <AppHeader /><HelpChat />
       <main className="mx-auto max-w-2xl px-4 py-8">
         {me.data && !me.data.dossierId ? (
           <p className="text-muted-foreground">Votre compte n'est rattaché à aucun dossier. Contactez votre cabinet.</p>
