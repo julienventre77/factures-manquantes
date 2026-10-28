@@ -1,3 +1,4 @@
+import { requireClient } from "@/lib/session";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { HelpChat } from "@/components/HelpChat";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,6 +25,7 @@ Vous pouvez souvent obtenir un duplicata auprès du fournisseur. Votre comptable
 const ACCEPT = "application/pdf,image/jpeg,image/png";
 
 export const Route = createFileRoute("/_authenticated/espace/$supplier")({
+  beforeLoad: requireClient,
   head: ({ params }) => ({
     meta: [
       { title: `${params.supplier} — PBC List` },
@@ -102,10 +104,10 @@ function SupplierPage() {
     setMode(null);
   }
 
-  if (txs.isLoading) return <div className="min-h-screen"><AppHeader /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
+  if (txs.isLoading) return <div className="min-h-screen"><AppHeader space="client" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
   if (!group)
     return (
-      <div className="min-h-screen"><AppHeader />
+      <div className="min-h-screen"><AppHeader space="client" />
         <main className="mx-auto max-w-2xl px-4 py-8">
           <p>Ce fournisseur n'a plus de demande en attente.</p>
           <Button asChild variant="outline" className="mt-4"><Link to="/espace">Retour</Link></Button>
@@ -120,7 +122,7 @@ function SupplierPage() {
 
   return (
     <div className="min-h-screen pb-28">
-      <AppHeader /><HelpChat groupKey={supplier} />
+      <AppHeader space="client" /><HelpChat groupKey={supplier} />
       <main className="mx-auto max-w-2xl px-4 py-6">
         <Link to="/espace" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Retour à la liste

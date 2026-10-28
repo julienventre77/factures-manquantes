@@ -72,3 +72,15 @@ export function groupBySupplier(txs: Tx[]): SupplierGroup[] {
       };
     });
 }
+
+// Route guards (UI only; RLS stays the security boundary).
+import { redirect } from "@tanstack/react-router";
+import type { QueryClient } from "@tanstack/react-query";
+export async function requireCabinet({ context }: { context: { queryClient: QueryClient } }) {
+  const me = await context.queryClient.fetchQuery(meQuery);
+  if (!me?.isCabinet) throw redirect({ to: "/cabinet/connexion" });
+}
+export async function requireClient({ context }: { context: { queryClient: QueryClient } }) {
+  const me = await context.queryClient.fetchQuery(meQuery);
+  if (!me || me.isCabinet || !me.dossierId) throw redirect({ to: "/" });
+}

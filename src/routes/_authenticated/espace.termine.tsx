@@ -1,3 +1,4 @@
+import { requireClient } from "@/lib/session";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HelpChat } from "@/components/HelpChat";
 import { CheckCircle2 } from "lucide-react";
@@ -5,6 +6,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/espace/termine")({
+  beforeLoad: requireClient,
   head: () => ({
     meta: [
       { title: "Merci ! — PBC List" },
@@ -17,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/espace/termine")({
   }),
   component: () => (
     <div className="min-h-screen pb-28">
-      <AppHeader /><HelpChat />
+      <AppHeader space="client" /><HelpChat />
       <main className="mx-auto max-w-xl px-4 py-16 text-center">
         <CheckCircle2 className="mx-auto mb-4 h-16 w-16 text-success" />
         <h1 className="text-3xl font-semibold">Merci, c'est terminé !</h1>

@@ -9,14 +9,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { meQuery } from "@/lib/session";
+import { requireCabinet, meQuery } from "@/lib/session";
 import { McpPanel } from "@/components/McpPanel";
 
 export const Route = createFileRoute("/_authenticated/cabinet/")({
-  beforeLoad: async ({ context }) => {
-    const me = await context.queryClient.fetchQuery(meQuery);
-    if (!me?.isCabinet) throw redirect({ to: "/espace" });
-  },
+  beforeLoad: requireCabinet,
   head: () => ({
     meta: [
       { title: "Dossiers clients — PBC List" },
@@ -58,7 +55,7 @@ function Cabinet() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader subtitle="Espace cabinet" />
+      <AppHeader space="cabinet" />
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         <h1 className="text-3xl font-semibold">Dossiers clients</h1>
         <McpPanel />
