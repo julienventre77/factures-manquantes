@@ -2,15 +2,22 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Building2, FileCheck2, ShieldCheck } from "lucide-react";
+import { ArrowRight, Briefcase, Eye, EyeOff, FileX, Mail, ShieldCheck, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getBootstrapStatus, bootstrapCabinet } from "@/lib/admin.functions";
 import { meQuery } from "@/lib/session";
+import { CABINET } from "@/lib/cabinet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { BrandMark, Monogram } from "@/components/brand";
+import { CabinetContact } from "@/components/AppHeader";
+
+const FEATURES = [
+  { icon: Upload, text: "Déposez vos factures en PDF, JPG ou PNG" },
+  { icon: Mail, text: "Ou transférez-les simplement par e-mail" },
+  { icon: FileX, text: "Pas de facture ? Indiquez-le, tout simplement" },
+];
 
 type Space = "client" | "cabinet";
 
@@ -21,6 +28,7 @@ export function LoginForm({ space }: { space: Space }) {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [wrongSpace, setWrongSpace] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
   const isCabinetPage = space === "cabinet";
   const boot = useQuery({
     queryKey: ["bootstrap"],
@@ -82,63 +90,121 @@ export function LoginForm({ space }: { space: Space }) {
     }
   }
 
-  const Icon = isCabinetPage ? Building2 : FileCheck2;
-  return (
-    <main className={`flex min-h-screen items-center justify-center px-4 py-10 ${isCabinetPage ? "bg-secondary" : ""}`}>
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Icon className="mx-auto mb-3 h-10 w-10 text-primary" />
-          {isCabinetPage && <Badge className="mb-2">Cabinet</Badge>}
-          <h1 className="text-3xl font-semibold">{isCabinetPage ? "Espace cabinet" : "Espace client"}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {isCabinetPage
-              ? needsBootstrap
-                ? "Première utilisation : créez le compte administrateur du cabinet."
-                : "Gestion des dossiers clients et des demandes de factures."
-              : "Transmettez vos factures manquantes en quelques minutes"}
-          </p>
+  const form = (
+    <form onSubmit={submit} className="space-y-5">
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-semibold">Adresse e-mail</Label>
+        <Input id="email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)}
+          placeholder="prenom.nom@entreprise.fr" className="h-12 bg-card md:text-base" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-sm font-semibold">Mot de passe</Label>
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete={needsBootstrap ? "new-password" : "current-password"}
+            required
+            minLength={needsBootstrap ? 8 : undefined}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-12 bg-card pr-12 md:text-base"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            aria-pressed={showPassword}
+            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-md text-muted-foreground hover:text-primary"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
         </div>
-        <Card>
-          <CardContent className="pt-6">
-            <form onSubmit={submit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Adresse e-mail</Label>
-                <Input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className="h-12" />
+      </div>
+      {wrongSpace && (
+        <div role="alert" className="rounded-md border border-destructive/40 bg-red-soft p-3 text-sm">
+          {wrongSpace}.{" "}
+          <Link to={isCabinetPage ? "/" : "/cabinet/connexion"} className="font-medium underline">
+            {isCabinetPage ? "Aller à l'espace client" : "Aller à l'espace cabinet"}
+          </Link>
+        </div>
+      )}
+      <Button type="submit" size="xl" className="sm:w-full" disabled={busy}>
+        {needsBootstrap ? "Créer le compte cabinet" : "Se connecter"} <ArrowRight className="text-mint" />
+      </Button>
+      <p className="flex items-start gap-2 text-sm text-muted-foreground">
+        <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" /> Vos documents sont stockés de façon privée et sécurisée.
+      </p>
+    </form>
+  );
+
+  if (isCabinetPage)
+    return (
+      <main className="space-cabinet flex min-h-screen flex-col bg-background">
+        <div className="bg-primary text-primary-foreground">
+          <div className="mx-auto flex max-w-5xl items-center gap-2.5 px-4 py-3">
+            <BrandMark tone="mint" />
+            <span className="font-bold">PBC List <span className="font-normal text-primary-foreground/80">· Espace cabinet</span></span>
+          </div>
+        </div>
+        <div className="flex flex-1 items-center justify-center px-4 py-10">
+          <div className="w-full max-w-md">
+            <h1 className="text-3xl">Espace cabinet</h1>
+            <p className="mt-2 text-muted-foreground">
+              {needsBootstrap
+                ? "Première utilisation : créez le compte administrateur du cabinet."
+                : "Gestion des dossiers clients et des demandes de factures."}
+            </p>
+            <div className="mt-6 rounded-2xl border bg-card p-6 shadow-sm sm:p-8">{form}</div>
+          </div>
+        </div>
+      </main>
+    );
+
+  return (
+    <main className="relative min-h-screen overflow-hidden bg-background">
+      <div aria-hidden className="pointer-events-none absolute -bottom-48 -left-48 h-[30rem] w-[30rem] rounded-full bg-pale/70" />
+      <div aria-hidden className="pointer-events-none absolute -right-28 -top-28 h-72 w-72 rounded-full bg-cream-2" />
+      <div className="relative mx-auto flex min-h-screen max-w-5xl flex-col px-4 py-8 sm:py-12">
+        <div className="grid flex-1 content-center gap-8 lg:grid-cols-2 lg:gap-x-16">
+          <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
+            <div className="flex items-center gap-3">
+              <Monogram name={CABINET.name} className="h-14 w-14 text-base" />
+              <span className="text-lg font-bold text-primary">{CABINET.name}</span>
+            </div>
+            <h1 className="mt-8 text-4xl sm:text-5xl">Espace client</h1>
+            <p className="mt-3 text-lg text-muted-foreground sm:text-xl">Transmettez vos factures manquantes en quelques minutes</p>
+          </div>
+          <div className="rounded-3xl border bg-card p-6 shadow-xl shadow-primary/10 sm:p-8 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-center">
+            {form}
+          </div>
+          <div className="lg:col-start-1 lg:row-start-2">
+            <ul className="space-y-4">
+              {FEATURES.map(({ icon: FeatureIcon, text }) => (
+                <li key={text} className="flex items-center gap-4">
+                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-card text-primary shadow-sm">
+                    <FeatureIcon className="h-5 w-5" />
+                  </span>
+                  <span>{text}</span>
+                </li>
+              ))}
+            </ul>
+            {(CABINET.email || CABINET.phone) && (
+              <div className="mt-8 rounded-2xl border bg-card/70 p-4">
+                <p className="text-sm">Une question ? <strong>{CABINET.name}</strong> vous répond.</p>
+                <CabinetContact className="mt-2" />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  minLength={needsBootstrap ? 8 : undefined}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="h-12"
-                />
-              </div>
-              {wrongSpace && (
-                <div role="alert" className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm">
-                  {wrongSpace}.{" "}
-                  <Link to={isCabinetPage ? "/" : "/cabinet/connexion"} className="font-medium underline">
-                    {isCabinetPage ? "Aller à l'espace client" : "Aller à l'espace cabinet"}
-                  </Link>
-                </div>
-              )}
-              <Button type="submit" size="xl" className="sm:w-full" disabled={busy}>
-                {needsBootstrap ? "Créer le compte cabinet" : "Se connecter"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-        <p className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
-          <ShieldCheck className="h-4 w-4" /> Vos documents sont stockés de façon privée et sécurisée.
-        </p>
-        {!isCabinetPage && (
-          <p className="mt-4 text-center text-xs">
-            <Link to="/cabinet/connexion" className="text-muted-foreground/70 hover:underline">Accès cabinet</Link>
-          </p>
-        )}
+            )}
+          </div>
+        </div>
+        <footer className="mt-10 flex items-center justify-between border-t border-cream-3 pt-5 text-sm">
+          <span className="flex items-center gap-2 font-semibold text-primary">
+            <BrandMark className="h-6 w-6 rounded-md [&_svg]:h-4 [&_svg]:w-4" /> PBC List
+          </span>
+          <Link to="/cabinet/connexion" className="inline-flex items-center gap-1.5 text-muted-foreground underline-offset-4 hover:text-primary hover:underline">
+            <Briefcase className="h-4 w-4" /> Accès cabinet
+          </Link>
+        </footer>
       </div>
     </main>
   );

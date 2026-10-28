@@ -10,7 +10,8 @@ import { getChatHistory, sendChatMessage, forwardQuestion } from "@/lib/assistan
 
 type Msg = { id: string; role: string; content: string; escalate?: boolean; question?: string };
 
-export function HelpChat({ groupKey }: { groupKey?: string | null }) {
+// `raised` lifts the robot above a fixed bottom bar.
+export function HelpChat({ groupKey, raised = false }: { groupKey?: string | null; raised?: boolean }) {
   const [open, setOpen] = useState(false);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -61,16 +62,22 @@ export function HelpChat({ groupKey }: { groupKey?: string | null }) {
       <button
         type="button"
         aria-label="Ouvrir l'assistant"
-        title="Besoin d'aide ?"
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform duration-200 hover:scale-110 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+        className={`group fixed right-5 z-40 flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary ${raised ? "bottom-24" : "bottom-5"}`}
       >
-        <Bot className="h-7 w-7" />
+        <span className="hidden rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg sm:block">Besoin d'aide ?</span>
+        <span className="relative flex h-14 w-14 items-center justify-center rounded-full border-4 border-card bg-primary text-mint shadow-lg transition-transform duration-200 group-hover:scale-110">
+          <Bot className="h-7 w-7" />
+          <span aria-hidden className="absolute -right-0.5 -top-0.5 h-3.5 w-3.5 rounded-full border-2 border-card bg-mint" />
+        </span>
       </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b p-4">
-            <SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Assistant PBC List</SheetTitle>
+            <SheetTitle className="flex items-center gap-2 text-primary">
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-mint"><Bot className="h-5 w-5" /></span>
+              Assistant PBC List
+            </SheetTitle>
             <SheetDescription>Je vous guide pour transmettre vos factures.</SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
@@ -78,7 +85,7 @@ export function HelpChat({ groupKey }: { groupKey?: string | null }) {
               <p className="text-sm text-muted-foreground">Posez votre question, par exemple : « Où trouver ma facture ? » ou « Que faire si je n'ai pas la facture ? »</p>
             )}
             {msgs.map((m) => (
-              <div key={m.id} className={m.role === "user" ? "ml-8 rounded-lg bg-primary p-3 text-sm text-primary-foreground" : "mr-4 text-sm"}>
+              <div key={m.id} className={m.role === "user" ? "ml-8 rounded-2xl rounded-br-md bg-primary p-3 text-sm text-primary-foreground" : "mr-4 rounded-2xl rounded-bl-md bg-pale-2 p-3 text-sm"}>
                 {m.role === "user" ? m.content : (
                   <div className="prose prose-sm max-w-none text-foreground"><ReactMarkdown>{m.content}</ReactMarkdown></div>
                 )}

@@ -5,8 +5,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -32,6 +31,19 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-mint: var(--mint);
+  --color-mint-soft: var(--mint-soft);
+  --color-mint-pale: var(--mint-pale);
+  --color-pale: var(--pale);
+  --color-pale-2: var(--pale-2);
+  --color-cream: var(--cream);
+  --color-cream-2: var(--cream-2);
+  --color-cream-3: var(--cream-3);
+  --color-teal-2: var(--teal-2);
+  --color-yellow: var(--yellow);
+  --color-yellow-soft: var(--yellow-soft);
+  --color-yellow-ink: var(--yellow-ink);
+  --color-red-soft: var(--red-soft);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -53,42 +65,65 @@
 
 :root {
   --radius: 0.75rem;
-  --background: oklch(0.982 0.006 85);
-  --foreground: oklch(0.24 0.03 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 240);
-  --primary: oklch(0.38 0.07 220);
-  --primary-foreground: oklch(0.98 0.005 85);
-  --secondary: oklch(0.94 0.015 210);
-  --secondary-foreground: oklch(0.3 0.05 220);
-  --muted: oklch(0.95 0.008 85);
-  --muted-foreground: oklch(0.5 0.02 240);
-  --accent: oklch(0.93 0.02 200);
-  --accent-foreground: oklch(0.3 0.05 220);
-  --destructive: oklch(0.55 0.18 28);
-  --destructive-foreground: oklch(0.98 0 0);
-  --success: oklch(0.55 0.11 155);
-  --success-foreground: oklch(0.98 0 0);
-  --warning: oklch(0.93 0.06 80);
-  --warning-foreground: oklch(0.38 0.08 60);
-  --border: oklch(0.9 0.01 85);
-  --input: oklch(0.88 0.012 85);
-  --ring: oklch(0.55 0.07 220);
-  --chart-1: oklch(0.38 0.07 220);
-  --chart-2: oklch(0.55 0.11 155);
-  --chart-3: oklch(0.7 0.12 75);
-  --chart-4: oklch(0.6 0.05 240);
-  --chart-5: oklch(0.55 0.18 28);
-  --sidebar: oklch(0.97 0.006 85);
-  --sidebar-foreground: oklch(0.24 0.03 240);
-  --sidebar-primary: oklch(0.38 0.07 220);
-  --sidebar-primary-foreground: oklch(0.98 0.005 85);
-  --sidebar-accent: oklch(0.93 0.02 200);
-  --sidebar-accent-foreground: oklch(0.3 0.05 220);
-  --sidebar-border: oklch(0.9 0.01 85);
-  --sidebar-ring: oklch(0.55 0.07 220);
+
+  /* Palette A (maquette validée le 28/10/2026) */
+  --teal: #003d3d;
+  --teal-2: #0f5150;
+  --mint: #00f872;
+  --mint-soft: #cbfde1;
+  --mint-pale: #e9fef2;
+  --pale: #d9efeb;
+  --pale-2: #e9f5f2;
+  --cream: #f8f4f1;
+  --cream-2: #f0e8e0;
+  --cream-3: #e4d8cc;
+  --yellow: #f3c628;
+  --yellow-soft: #fcf0c4;
+  --yellow-ink: #5e4c0e;
+  --red-soft: #fdecea;
+
+  --background: var(--cream);
+  --foreground: #0f2b2b;
+  --card: #ffffff;
+  --card-foreground: #0f2b2b;
+  --popover: #ffffff;
+  --popover-foreground: #0f2b2b;
+  --primary: var(--teal);
+  --primary-foreground: #ffffff;
+  --secondary: var(--pale-2);
+  --secondary-foreground: var(--teal);
+  --muted: var(--cream-2);
+  --muted-foreground: #566a6b;
+  --accent: var(--pale);
+  --accent-foreground: var(--teal);
+  --destructive: #b42318;
+  --destructive-foreground: #ffffff;
+  --success: #0b7a4b;
+  --success-foreground: #ffffff;
+  --warning: var(--yellow-soft);
+  --warning-foreground: var(--yellow-ink);
+  --border: #e0e7e6;
+  --input: #7c8e8d;
+  --ring: var(--teal);
+  --chart-1: var(--teal);
+  --chart-2: #0b7a4b;
+  --chart-3: var(--yellow);
+  --chart-4: #566a6b;
+  --chart-5: #b42318;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f2b2b;
+  --sidebar-primary: var(--teal);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--pale);
+  --sidebar-accent-foreground: var(--teal);
+  --sidebar-border: #e0e7e6;
+  --sidebar-ring: var(--teal);
+}
+
+/* Ambiance B : l'espace cabinet est plus sobre (fond gris clair), l'espace client garde le fond crème. */
+.space-cabinet {
+  --background: #f4f6f6;
+  --muted: #eef2f1;
 }
 
 @layer base {
@@ -103,7 +138,8 @@
   h1,
   h2,
   h3 {
-    font-family: var(--font-serif);
-    letter-spacing: -0.01em;
+    color: var(--color-primary);
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
