@@ -51,28 +51,49 @@ export async function syncDossier(dossierId: string) {
         `Le jeton Pennylane est lié à l'entreprise ${me.company.id}, pas au company_id ${dossier.company_id} de ce dossier.`,
       );
 
-    // 1. Outgoing transactions requiring a document
+    // 1. Outgoing, non-archived bank transactions
     const since = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10);
-    const filter = encodeURIComponent(JSON.stringify([{ field: "date", operator: "gteq", value: since }]));
-    const candidates: PlTx[] = [];
-    let cursor: string | null = null;
-    do {
-      const page: { items: PlTx[]; has_more: boolean; next_cursor: string | null } = await pl(
-        `/transactions?limit=100&filter=${filter}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
-        dossier.company_id,
-        token,
-      );
-      for (const t of page.items)
-        if (t.attachment_required && !t.archived_at && Number(t.amount) < 0) candidates.push(t);
-      cursor = page.has_more ? page.next_cursor : null;
-    } while (cursor);
+    const outgoing = (
+      await plAll<PlTx>("/transactions", [{ field: "date", operator: "gteq", value: since }], dossier.company_id, token)
+    ).filter((t) => !t.archived_at && Number(t.amount) < 0);
 
-    // 2. Keep only those without a matched supplier invoice
-    const needed: PlTx[] = [];
-    for (const t of candidates) {
-      const m = await pl<{ items: { type: string }[] }>(`/transactions/${t.id}/matched_invoices`, dossier.company_id, token);
-      if (!m.items.some((i) => i.type === "supplier")) needed.push(t);
-      await sleep(220); // stay under Pennylane rate limit
+    // 2. Criterion: a payment is "non lettré" when a counterpart line (not on a 512 account)
+    //    of its bank ledger entry has no lettering. The ledger entry id equals the transaction id.
+    const counterparts = new Map<string, string[]>();
+    let needed: PlTx[];
+    try {
+      const journals = [...new Set(outgoing.map((t) => t.journal?.id).filter(Boolean).map(String))];
+      const lines = journals.length
+        ? await plAll<PlLine>(
+            "/ledger_entry_lines",
+            [
+              { field: "journal_id", operator: "in", value: journals },
+              { field: "date", operator: "gteq", value: since },
+            ],
+            dossier.company_id,
+            token,
+          )
+        : [];
+      const byEntry = new Map<string, PlLine[]>();
+      for (const l of lines) {
+        const k = String(l.ledger_entry.id);
+        byEntry.set(k, [...(byEntry.get(k) ?? []), l]);
+      }
+      needed = outgoing.filter((t) => {
+        const cp = (byEntry.get(String(t.id)) ?? []).filter((l) => !l.ledger_account.number.startsWith("512"));
+        counterparts.set(String(t.id), [...new Set(cp.map((l) => l.ledger_account.number))]);
+        if (cp.length === 0) return true; // no accounting entry yet: still needs follow-up
+        return cp.some((l) => (l.lettered_ledger_entry_lines?.ids ?? []).length === 0);
+      });
+    } catch (e) {
+      // Fallback to the previous criterion if accounting lines are unavailable.
+      console.error("Lettering unavailable, fallback", e);
+      needed = [];
+      for (const t of outgoing.filter((x) => x.attachment_required)) {
+        const m = await pl<{ items: { type: string }[] }>(`/transactions/${t.id}/matched_invoices`, dossier.company_id, token);
+        if (!m.items.some((i) => i.type === "supplier")) needed.push(t);
+        await sleep(220);
+      }
     }
 
     // 3. Upsert into the database, reapplying cabinet supplier corrections
