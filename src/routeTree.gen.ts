@@ -12,6 +12,8 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
+import { Route as AuthenticatedCabinetIndexRouteImport } from './routes/_authenticated/cabinet.index'
+import { Route as AuthenticatedCabinetDossierIdRouteImport } from './routes/_authenticated/cabinet.$dossierId'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
 import { Route as AuthenticatedEspaceSupplierRouteImport } from './routes/_authenticated/espace.$supplier'
 import { Route as AuthenticatedEspaceTermineRouteImport } from './routes/_authenticated/espace.termine'
@@ -30,6 +32,18 @@ const AuthenticatedAccueilRoute = AuthenticatedAccueilRouteImport.update({
   path: '/accueil',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedCabinetIndexRoute =
+  AuthenticatedCabinetIndexRouteImport.update({
+    id: '/cabinet/',
+    path: '/cabinet/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedCabinetDossierIdRoute =
+  AuthenticatedCabinetDossierIdRouteImport.update({
+    id: '/cabinet/$dossierId',
+    path: '/cabinet/$dossierId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEspaceIndexRoute =
   AuthenticatedEspaceIndexRouteImport.update({
     id: '/espace/',
@@ -52,15 +66,19 @@ const AuthenticatedEspaceTermineRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
+  '/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
+  '/cabinet': typeof AuthenticatedCabinetIndexRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
 }
 export interface FileRoutesById {
@@ -68,23 +86,40 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
+  '/_authenticated/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/_authenticated/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/_authenticated/espace/termine': typeof AuthenticatedEspaceTermineRoute
+  '/_authenticated/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/accueil' | '/espace/$supplier' | '/espace/termine' | '/espace/'
+    | '/'
+    | '/accueil'
+    | '/cabinet/$dossierId'
+    | '/espace/$supplier'
+    | '/espace/termine'
+    | '/cabinet/'
+    | '/espace/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/accueil' | '/espace/$supplier' | '/espace/termine' | '/espace'
+  to:
+    | '/'
+    | '/accueil'
+    | '/cabinet/$dossierId'
+    | '/espace/$supplier'
+    | '/espace/termine'
+    | '/cabinet'
+    | '/espace'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/accueil'
+    | '/_authenticated/cabinet/$dossierId'
     | '/_authenticated/espace/$supplier'
     | '/_authenticated/espace/termine'
+    | '/_authenticated/cabinet/'
     | '/_authenticated/espace/'
   fileRoutesById: FileRoutesById
 }
@@ -116,6 +151,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAccueilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/cabinet/': {
+      id: '/_authenticated/cabinet/'
+      path: '/cabinet'
+      fullPath: '/cabinet/'
+      preLoaderRoute: typeof AuthenticatedCabinetIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/cabinet/$dossierId': {
+      id: '/_authenticated/cabinet/$dossierId'
+      path: '/cabinet/$dossierId'
+      fullPath: '/cabinet/$dossierId'
+      preLoaderRoute: typeof AuthenticatedCabinetDossierIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/espace/': {
       id: '/_authenticated/espace/'
       path: '/espace'
@@ -142,15 +191,19 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
+  AuthenticatedCabinetDossierIdRoute: typeof AuthenticatedCabinetDossierIdRoute
   AuthenticatedEspaceSupplierRoute: typeof AuthenticatedEspaceSupplierRoute
   AuthenticatedEspaceTermineRoute: typeof AuthenticatedEspaceTermineRoute
+  AuthenticatedCabinetIndexRoute: typeof AuthenticatedCabinetIndexRoute
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
+  AuthenticatedCabinetDossierIdRoute: AuthenticatedCabinetDossierIdRoute,
   AuthenticatedEspaceSupplierRoute: AuthenticatedEspaceSupplierRoute,
   AuthenticatedEspaceTermineRoute: AuthenticatedEspaceTermineRoute,
+  AuthenticatedCabinetIndexRoute: AuthenticatedCabinetIndexRoute,
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
 }
 
