@@ -128,6 +128,7 @@ export type Database = {
           collect_email_customers: string | null
           company_id: string
           created_at: string
+          detect_prefixes: string
           id: string
           last_sync_at: string | null
           last_sync_error: string | null
@@ -138,6 +139,7 @@ export type Database = {
           collect_email_customers?: string | null
           company_id: string
           created_at?: string
+          detect_prefixes?: string
           id?: string
           last_sync_at?: string | null
           last_sync_error?: string | null
@@ -148,6 +150,7 @@ export type Database = {
           collect_email_customers?: string | null
           company_id?: string
           created_at?: string
+          detect_prefixes?: string
           id?: string
           last_sync_at?: string | null
           last_sync_error?: string | null
