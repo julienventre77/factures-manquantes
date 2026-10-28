@@ -82,65 +82,98 @@ async function plAll<T>(path: string, filter: unknown[], companyId: string, toke
   return out;
 }
 
-export async function syncDossier(dossierId: string) {
+// Shared detection: same rule for MCP and API data.
+type NTx = { id: string; label: string; date: string; amount: string };
+type NLine = { entry: string; account: string; lettered: boolean };
+function detect(txs: NTx[], lines: NLine[], prefixesStr: string | null) {
+  const counterparts = new Map<string, string[]>();
+  const unletteredElsewhere = new Set<string>();
+  const byEntry = new Map<string, NLine[]>();
+  for (const l of lines) byEntry.set(l.entry, [...(byEntry.get(l.entry) ?? []), l]);
+  const prefixes = parsePrefixes(prefixesStr);
+  const needed = txs.filter((t) => {
+    const cp = (byEntry.get(t.id) ?? []).filter((l) => !l.account.startsWith("512"));
+    counterparts.set(t.id, [...new Set(cp.map((l) => l.account))]);
+    if (cp.length === 0) return true; // no accounting entry yet: still needs follow-up
+    const unlettered = cp.filter((l) => !l.lettered);
+    if (unlettered.length) unletteredElsewhere.add(t.id);
+    return unlettered.some((l) => matchesPrefix(l.account, prefixes));
+  });
+  return { needed, counterparts, unletteredElsewhere };
+}
+
+async function fetchViaApi(dossier: { company_id: string; detect_prefixes: string | null }, since: string) {
   const token = process.env["PENNYLANE_API_TOKEN"];
   if (!token) throw new Error("Jeton Pennylane manquant.");
+  await checkAccess(dossier.company_id, token);
+  const outgoing = (
+    await plAll<PlTx>("/transactions", [{ field: "date", operator: "gteq", value: since }], dossier.company_id, token)
+  ).filter((t) => !t.archived_at && Number(t.amount) !== 0);
+  try {
+    const journals = [...new Set(outgoing.map((t) => t.journal?.id).filter(Boolean).map(String))];
+    const lines = journals.length
+      ? await plAll<PlLine>(
+          "/ledger_entry_lines",
+          [
+            { field: "journal_id", operator: "in", value: journals },
+            { field: "date", operator: "gteq", value: since },
+          ],
+          dossier.company_id,
+          token,
+        )
+      : [];
+    return detect(
+      outgoing.map((t) => ({ id: String(t.id), label: t.label ?? "", date: t.date, amount: t.amount })),
+      lines.map((l) => ({
+        entry: String(l.ledger_entry.id),
+        account: l.ledger_account.number,
+        lettered: (l.lettered_ledger_entry_lines?.ids ?? []).length > 0,
+      })),
+      dossier.detect_prefixes,
+    );
+  } catch (e) {
+    // Fallback to the previous criterion if accounting lines are unavailable.
+    console.error("Lettering unavailable, fallback", (e as Error).message);
+    const needed: NTx[] = [];
+    for (const t of outgoing.filter((x) => x.attachment_required && Number(x.amount) < 0)) {
+      const m = await pl<{ items: { type: string }[] }>(`/transactions/${t.id}/matched_invoices`, dossier.company_id, token);
+      if (!m.items.some((i) => i.type === "supplier")) needed.push({ id: String(t.id), label: t.label ?? "", date: t.date, amount: t.amount });
+      await sleep(220);
+    }
+    return { needed, counterparts: new Map<string, string[]>(), unletteredElsewhere: new Set<string>() };
+  }
+}
+
+export async function syncDossier(dossierId: string) {
   const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
 
   const { data: dossier, error: dErr } = await db.from("dossiers").select("*").eq("id", dossierId).single();
   if (dErr || !dossier) throw new Error("Dossier introuvable");
 
   try {
-    await checkAccess(dossier.company_id, token);
-
-    // 1. Outgoing and incoming non-archived bank transactions
     const since = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10);
-    const outgoing = (
-      await plAll<PlTx>("/transactions", [{ field: "date", operator: "gteq", value: since }], dossier.company_id, token)
-    ).filter((t) => !t.archived_at && Number(t.amount) !== 0);
-
-    // 2. Criterion: a payment is "non lettré" when a counterpart line (not on a 512 account)
-    //    of its bank ledger entry has no lettering. The ledger entry id equals the transaction id.
-    const counterparts = new Map<string, string[]>();
-    const unletteredElsewhere = new Set<string>(); // still unlettered, but outside the chosen accounts
-    let needed: PlTx[];
+    const mcp = await import("./mcp.server");
+    let source = "MCP";
+    let mcpError: string | null = null;
+    let result: ReturnType<typeof detect>;
     try {
-      const journals = [...new Set(outgoing.map((t) => t.journal?.id).filter(Boolean).map(String))];
-      const lines = journals.length
-        ? await plAll<PlLine>(
-            "/ledger_entry_lines",
-            [
-              { field: "journal_id", operator: "in", value: journals },
-              { field: "date", operator: "gteq", value: since },
-            ],
-            dossier.company_id,
-            token,
-          )
-        : [];
-      const byEntry = new Map<string, PlLine[]>();
-      for (const l of lines) {
-        const k = String(l.ledger_entry.id);
-        byEntry.set(k, [...(byEntry.get(k) ?? []), l]);
-      }
-      const prefixes = parsePrefixes(dossier.detect_prefixes);
-      needed = outgoing.filter((t) => {
-        const cp = (byEntry.get(String(t.id)) ?? []).filter((l) => !l.ledger_account.number.startsWith("512"));
-        counterparts.set(String(t.id), [...new Set(cp.map((l) => l.ledger_account.number))]);
-        if (cp.length === 0) return true; // no accounting entry yet: still needs follow-up
-        const unlettered = cp.filter((l) => (l.lettered_ledger_entry_lines?.ids ?? []).length === 0);
-        if (unlettered.length) unletteredElsewhere.add(String(t.id));
-        return unlettered.some((l) => matchesPrefix(l.ledger_account.number, prefixes));
-      });
+      const { txs, lines } = await mcp.mcpFetch(dossier.company_id, since);
+      result = detect(
+        txs.map((t) => ({ id: String(t.id), label: t.description ?? "", date: t.date, amount: t.amount })),
+        lines.map((l) => ({ entry: String(l.journal_entry_id), account: l.account_number, lettered: !!l.lettering_id })),
+        dossier.detect_prefixes,
+      );
     } catch (e) {
-      // Fallback to the previous criterion if accounting lines are unavailable.
-      console.error("Lettering unavailable, fallback", e);
-      needed = [];
-      for (const t of outgoing.filter((x) => x.attachment_required && Number(x.amount) < 0)) {
-        const m = await pl<{ items: { type: string }[] }>(`/transactions/${t.id}/matched_invoices`, dossier.company_id, token);
-        if (!m.items.some((i) => i.type === "supplier")) needed.push(t);
-        await sleep(220);
+      if (e instanceof mcp.McpNoAccess) {
+        await db.from("dossiers").update({ last_mcp_error: e.message }).eq("id", dossierId);
+        throw e;
       }
+      mcpError = e instanceof mcp.McpUnavailable ? (e as Error).message : `Erreur MCP : ${(e as Error).message.slice(0, 200)}`;
+      console.error("MCP sync failed, API fallback");
+      source = "API (secours)";
+      result = await fetchViaApi(dossier, since);
     }
+    const { needed, counterparts, unletteredElsewhere } = result;
 
     // 3. Upsert into the database, reapplying cabinet supplier corrections
     const { data: aliases } = await db.from("supplier_aliases").select("detected_name, display_name").eq("dossier_id", dossierId);
