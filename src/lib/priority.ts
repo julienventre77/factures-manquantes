@@ -25,6 +25,13 @@ export function prioritize(groups: SupplierGroup[]): SupplierGroup[] {
   });
 }
 
+// Order of the steps inside the flow. It must not move while the client answers,
+// so it uses each group's whole amount and oldest payment, not what is left to do.
+export function stepOrder(groups: SupplierGroup[]): SupplierGroup[] {
+  const oldest = (g: SupplierGroup) => g.txs.reduce((d, t) => (t.date < d ? t.date : d), "9999-12-31");
+  return [...groups].sort((a, b) => b.total - a.total || oldest(a).localeCompare(oldest(b)) || a.name.localeCompare(b.name, "fr"));
+}
+
 // Case, accents and spaces are ignored; "389.90" and "389,90" are the same amount.
 export function normalizeSearch(s: string): string {
   return s

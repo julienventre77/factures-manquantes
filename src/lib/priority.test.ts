@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { matchesSearch, prioritize, txHaystack } from "./priority";
+import { matchesSearch, prioritize, stepOrder, txHaystack } from "./priority";
 import type { SupplierGroup, Tx } from "./session";
 
 const tx = (over: Partial<Tx>): Tx => ({
@@ -8,7 +8,7 @@ const tx = (over: Partial<Tx>): Tx => ({
   ...over,
 });
 const group = (name: string, txs: Tx[]): SupplierGroup => ({
-  key: `achat:${name}`, direction: "out", name, txs, total: 0,
+  key: `achat:${name}`, direction: "out", name, txs, total: txs.reduce((s, t) => s + Math.abs(t.amount), 0),
   state: txs.every((t) => t.status !== "a_faire") ? "done" : txs.some((t) => t.status !== "a_faire") ? "progress" : "todo",
 });
 
@@ -28,6 +28,24 @@ describe("prioritize", () => {
     const recent = group("Récent", [tx({ amount: -20, date: "2026-05-01" })]);
     const old = group("Ancien", [tx({ amount: -20, date: "2026-01-15" })]);
     expect(prioritize([recent, old]).map((g) => g.name)).toEqual(["Ancien", "Récent"]);
+  });
+});
+
+describe("stepOrder", () => {
+  it("keeps the same order while the client answers", () => {
+    const a = group("A", [tx({ amount: -1000 })]);
+    const b = group("B", [tx({ amount: -500 })]);
+    const c = group("C", [tx({ amount: -100 })]);
+    const before = stepOrder([c, a, b]).map((g) => g.name);
+    const aDone = group("A", [tx({ amount: -1000, status: "depose" })]);
+    expect(before).toEqual(["A", "B", "C"]);
+    expect(stepOrder([c, aDone, b]).map((g) => g.name)).toEqual(before);
+  });
+  it("breaks ties with the oldest payment, then the name", () => {
+    const recent = group("Récent", [tx({ amount: -20, date: "2026-05-01" })]);
+    const old = group("Ancien", [tx({ amount: -20, date: "2026-01-15" })]);
+    const twin = group("Bis", [tx({ amount: -20, date: "2026-01-15" })]);
+    expect(stepOrder([recent, twin, old]).map((g) => g.name)).toEqual(["Ancien", "Bis", "Récent"]);
   });
 });
 
