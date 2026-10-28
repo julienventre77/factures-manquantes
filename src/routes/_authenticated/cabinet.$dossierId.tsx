@@ -64,7 +64,7 @@ function DossierPage() {
     setSyncing(true);
     try {
       const r = await syncDossierNow({ data: { dossierId } });
-      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouveau(x) paiement(s) à valider, ${r.closed} justifiée(s) entre-temps.`);
+      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouveau(x) paiement(s) à valider, ${r.closed} justifiée(s) entre-temps. Source : ${r.source}.`);
       reload();
     } catch (e) {
       toast.error((e as Error).message);
@@ -111,6 +111,10 @@ function DossierPage() {
             <p className="text-sm text-muted-foreground">
               Dernière synchronisation : {dossier.last_sync_at ? new Date(dossier.last_sync_at).toLocaleString("fr-FR") : "jamais"}
             </p>
+            {dossier.last_sync_source && (
+              <p className="text-sm text-muted-foreground">Source de la dernière synchronisation : {dossier.last_sync_source}</p>
+            )}
+            {dossier.last_mcp_error && <p className="text-sm text-destructive">Erreur MCP : {dossier.last_mcp_error}</p>}
             {dossier.last_sync_error && <p className="text-sm text-destructive">{dossier.last_sync_error}</p>}
           </div>
           <Button size="lg" onClick={sync} disabled={syncing}>

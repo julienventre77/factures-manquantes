@@ -18,6 +18,7 @@ import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedEspaceSupplierRouteImport } from './routes/_authenticated/espace.$supplier'
 import { Route as AuthenticatedEspaceTermineRouteImport } from './routes/_authenticated/espace.termine'
 import { Route as ApiPublicJobsSyncPennylaneRouteImport } from './routes/api/public/jobs/sync-pennylane'
+import { Route as ApiPublicPennylaneMcpCallbackRouteImport } from './routes/api/public/pennylane-mcp/callback'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -69,6 +70,12 @@ const ApiPublicJobsSyncPennylaneRoute =
     path: '/api/public/jobs/sync-pennylane',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPennylaneMcpCallbackRoute =
+  ApiPublicPennylaneMcpCallbackRouteImport.update({
+    id: '/api/public/pennylane-mcp/callback',
+    path: '/api/public/pennylane-mcp/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
   '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
+  '/api/public/pennylane-mcp/callback': typeof ApiPublicPennylaneMcpCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -89,6 +97,7 @@ export interface FileRoutesByTo {
   '/cabinet': typeof AuthenticatedCabinetIndexRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
   '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
+  '/api/public/pennylane-mcp/callback': typeof ApiPublicPennylaneMcpCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -101,6 +110,7 @@ export interface FileRoutesById {
   '/_authenticated/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
   '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
+  '/api/public/pennylane-mcp/callback': typeof ApiPublicPennylaneMcpCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/cabinet/'
     | '/espace/'
     | '/api/public/jobs/sync-pennylane'
+    | '/api/public/pennylane-mcp/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -123,6 +134,7 @@ export interface FileRouteTypes {
     | '/cabinet'
     | '/espace'
     | '/api/public/jobs/sync-pennylane'
+    | '/api/public/pennylane-mcp/callback'
   id:
     | '__root__'
     | '/'
@@ -134,12 +146,14 @@ export interface FileRouteTypes {
     | '/_authenticated/cabinet/'
     | '/_authenticated/espace/'
     | '/api/public/jobs/sync-pennylane'
+    | '/api/public/pennylane-mcp/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   ApiPublicJobsSyncPennylaneRoute: typeof ApiPublicJobsSyncPennylaneRoute
+  ApiPublicPennylaneMcpCallbackRoute: typeof ApiPublicPennylaneMcpCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -207,6 +221,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicJobsSyncPennylaneRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/pennylane-mcp/callback': {
+      id: '/api/public/pennylane-mcp/callback'
+      path: '/api/public/pennylane-mcp/callback'
+      fullPath: '/api/public/pennylane-mcp/callback'
+      preLoaderRoute: typeof ApiPublicPennylaneMcpCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -235,6 +256,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   ApiPublicJobsSyncPennylaneRoute: ApiPublicJobsSyncPennylaneRoute,
+  ApiPublicPennylaneMcpCallbackRoute: ApiPublicPennylaneMcpCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
