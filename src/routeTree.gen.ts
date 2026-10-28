@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
+import { Route as AuthenticatedEspaceSupplierRouteImport } from './routes/_authenticated/espace.$supplier'
 import { Route as AuthenticatedEspaceTermineRouteImport } from './routes/_authenticated/espace.termine'
 
 const IndexRoute = IndexRouteImport.update({
@@ -35,6 +36,12 @@ const AuthenticatedEspaceIndexRoute =
     path: '/espace/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedEspaceSupplierRoute =
+  AuthenticatedEspaceSupplierRouteImport.update({
+    id: '/espace/$supplier',
+    path: '/espace/$supplier',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedEspaceTermineRoute =
   AuthenticatedEspaceTermineRouteImport.update({
     id: '/espace/termine',
@@ -45,12 +52,14 @@ const AuthenticatedEspaceTermineRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
 }
@@ -59,19 +68,22 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
+  '/_authenticated/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/_authenticated/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/accueil' | '/espace/termine' | '/espace/'
+  fullPaths:
+    '/' | '/accueil' | '/espace/$supplier' | '/espace/termine' | '/espace/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/accueil' | '/espace/termine' | '/espace'
+  to: '/' | '/accueil' | '/espace/$supplier' | '/espace/termine' | '/espace'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_authenticated/accueil'
+    | '/_authenticated/espace/$supplier'
     | '/_authenticated/espace/termine'
     | '/_authenticated/espace/'
   fileRoutesById: FileRoutesById
@@ -111,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/espace/$supplier': {
+      id: '/_authenticated/espace/$supplier'
+      path: '/espace/$supplier'
+      fullPath: '/espace/$supplier'
+      preLoaderRoute: typeof AuthenticatedEspaceSupplierRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/espace/termine': {
       id: '/_authenticated/espace/termine'
       path: '/espace/termine'
@@ -123,12 +142,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAccueilRoute: typeof AuthenticatedAccueilRoute
+  AuthenticatedEspaceSupplierRoute: typeof AuthenticatedEspaceSupplierRoute
   AuthenticatedEspaceTermineRoute: typeof AuthenticatedEspaceTermineRoute
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAccueilRoute: AuthenticatedAccueilRoute,
+  AuthenticatedEspaceSupplierRoute: AuthenticatedEspaceSupplierRoute,
   AuthenticatedEspaceTermineRoute: AuthenticatedEspaceTermineRoute,
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
 }
