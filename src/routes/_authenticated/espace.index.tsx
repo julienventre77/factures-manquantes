@@ -73,10 +73,9 @@ function Espace() {
         ) : (
           <>
             <h1 className="text-2xl font-semibold sm:text-3xl">
-              Il nous manque {remaining} facture{remaining > 1 ? "s" : ""} chez {pendingSuppliers} fournisseur
-              {pendingSuppliers > 1 ? "s" : ""}
+              Il nous manque {remaining} facture{remaining > 1 ? "s" : ""} pour {pendingSuppliers} fournisseur{pendingSuppliers > 1 ? "s" : ""} ou client{pendingSuppliers > 1 ? "s" : ""}
             </h1>
-            <p className="mt-2 text-muted-foreground">Choisissez un fournisseur pour commencer. Cela prend quelques minutes.</p>
+            <p className="mt-2 text-muted-foreground">Choisissez une ligne pour commencer. Cela prend quelques minutes.</p>
             <div className="mt-6">
               <div className="mb-2 flex justify-between text-sm">
                 <span>Votre progression</span>
@@ -87,18 +86,26 @@ function Espace() {
           </>
         )}
 
-        <div className="mt-8 space-y-3">
-          {groups.map((g) => (
+        {(["out", "in"] as const).map((dir) => {
+          const list = groups.filter((g) => g.direction === dir);
+          if (!list.length) return null;
+          return (
+        <section key={dir} className="mt-8">
+          <h2 className="text-xl font-semibold">
+            {dir === "out" ? "Factures d'achat manquantes (fournisseurs)" : "Factures de vente manquantes (vos clients)"}
+          </h2>
+        <div className="mt-3 space-y-3">
+          {list.map((g) => (
             <Link
-              key={g.name}
+              key={g.key}
               to="/espace/$supplier"
-              params={{ supplier: g.name }}
+              params={{ supplier: g.key }}
               className="flex items-center justify-between rounded-xl border bg-card p-5 transition-shadow hover:shadow-md"
             >
               <div>
                 <div className="text-lg font-semibold">{g.name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {g.txs.length} paiement{g.txs.length > 1 ? "s" : ""} · {formatEUR(g.total)}
+                  {g.txs.length} {dir === "out" ? "paiement" : "encaissement"}{g.txs.length > 1 ? "s" : ""} · {formatEUR(g.total)}
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -108,6 +115,9 @@ function Espace() {
             </Link>
           ))}
         </div>
+        </section>
+          );
+        })}
       </main>
     </div>
   );
