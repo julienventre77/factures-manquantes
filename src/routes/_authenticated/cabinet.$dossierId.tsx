@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ReviewPanel } from "@/components/ReviewPanel";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
 import { meQuery, groupBySupplier, formatDate, formatEUR, STATUS_LABEL, type Tx } from "@/lib/session";
@@ -62,7 +63,7 @@ function DossierPage() {
     setSyncing(true);
     try {
       const r = await syncDossierNow({ data: { dossierId } });
-      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouvelle(s), ${r.closed} justifiée(s) entre-temps.`);
+      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouveau(x) paiement(s) à valider, ${r.closed} justifiée(s) entre-temps.`);
       reload();
     } catch (e) {
       toast.error((e as Error).message);
@@ -93,7 +94,8 @@ function DossierPage() {
 
   if (!q.data) return <div className="min-h-screen"><AppHeader subtitle="Espace cabinet" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
   const { dossier, members, txs, uploads } = q.data;
-  const groups = groupBySupplier(txs);
+  const sent = txs.filter((t) => (t.review_state ?? "sent") === "sent");
+  const groups = groupBySupplier(sent);
 
   return (
     <div className="min-h-screen">
@@ -118,8 +120,14 @@ function DossierPage() {
         <DossierSettings dossier={dossier} onSaved={reload} />
         <Members dossierId={dossierId} members={members} onSaved={reload} />
 
+        <ReviewPanel
+          pending={txs.filter((t) => t.review_state === "pending")}
+          dismissed={txs.filter((t) => t.review_state === "dismissed")}
+          onChanged={reload}
+        />
+
         <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">Fournisseurs ({groups.length})</h2>
+          <h2 className="text-2xl font-semibold">Envoyés au client — fournisseurs ({groups.length})</h2>
           {groups.length === 0 && <p className="text-muted-foreground">Aucune demande en cours.</p>}
           {groups.map((g) => (
             <Card key={g.name}>
