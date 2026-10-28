@@ -94,6 +94,7 @@ export async function syncDossier(dossierId: string) {
           label: t.label ?? "",
           supplier_detected: detected,
           supplier: aliasMap.get(detected) ?? detected,
+          review_state: "pending",
         };
       });
     if (inserts.length) {
