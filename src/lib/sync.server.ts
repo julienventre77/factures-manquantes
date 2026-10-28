@@ -21,6 +21,15 @@ type PlLine = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export const DEFAULT_PREFIXES = "401, 411, 471";
+export function parsePrefixes(s: string | null | undefined): string[] {
+  const list = (s ?? DEFAULT_PREFIXES).split(/[,;\s]+/).map((p) => p.trim()).filter((p) => /^\d+$/.test(p));
+  return list.length ? list : parsePrefixes(DEFAULT_PREFIXES);
+}
+export function matchesPrefix(account: string, prefixes: string[]) {
+  return prefixes.some((p) => account.startsWith(p));
+}
+
 async function pl<T>(path: string, companyId: string, token: string): Promise<T> {
   for (let attempt = 0; attempt < 4; attempt++) {
     const res = await fetch(`${BASE}${path}`, {
@@ -83,6 +92,7 @@ export async function syncDossier(dossierId: string) {
     // 2. Criterion: a payment is "non lettré" when a counterpart line (not on a 512 account)
     //    of its bank ledger entry has no lettering. The ledger entry id equals the transaction id.
     const counterparts = new Map<string, string[]>();
+    const unletteredElsewhere = new Set<string>(); // still unlettered, but outside the chosen accounts
     let needed: PlTx[];
     try {
       const journals = [...new Set(outgoing.map((t) => t.journal?.id).filter(Boolean).map(String))];
@@ -102,11 +112,14 @@ export async function syncDossier(dossierId: string) {
         const k = String(l.ledger_entry.id);
         byEntry.set(k, [...(byEntry.get(k) ?? []), l]);
       }
+      const prefixes = parsePrefixes(dossier.detect_prefixes);
       needed = outgoing.filter((t) => {
         const cp = (byEntry.get(String(t.id)) ?? []).filter((l) => !l.ledger_account.number.startsWith("512"));
         counterparts.set(String(t.id), [...new Set(cp.map((l) => l.ledger_account.number))]);
         if (cp.length === 0) return true; // no accounting entry yet: still needs follow-up
-        return cp.some((l) => (l.lettered_ledger_entry_lines?.ids ?? []).length === 0);
+        const unlettered = cp.filter((l) => (l.lettered_ledger_entry_lines?.ids ?? []).length === 0);
+        if (unlettered.length) unletteredElsewhere.add(String(t.id));
+        return unlettered.some((l) => matchesPrefix(l.ledger_account.number, prefixes));
       });
     } catch (e) {
       // Fallback to the previous criterion if accounting lines are unavailable.
@@ -122,7 +135,10 @@ export async function syncDossier(dossierId: string) {
     // 3. Upsert into the database, reapplying cabinet supplier corrections
     const { data: aliases } = await db.from("supplier_aliases").select("detected_name, display_name").eq("dossier_id", dossierId);
     const aliasMap = new Map((aliases ?? []).map((a) => [a.detected_name, a.display_name]));
-    const { data: existing } = await db.from("transactions").select("id, pennylane_id, is_open").eq("dossier_id", dossierId);
+    const { data: existing } = await db
+      .from("transactions")
+      .select("id, pennylane_id, is_open, review_state, status")
+      .eq("dossier_id", dossierId);
     const byPl = new Map((existing ?? []).map((e) => [e.pennylane_id, e]));
     const neededIds = new Set(needed.map((t) => String(t.id)));
 
@@ -149,7 +165,11 @@ export async function syncDossier(dossierId: string) {
     }
     const reopen = (existing ?? []).filter((e) => !e.is_open && neededIds.has(e.pennylane_id)).map((e) => e.id);
     if (reopen.length) await db.from("transactions").update({ is_open: true }).in("id", reopen);
-    const close = (existing ?? []).filter((e) => e.is_open && !neededIds.has(e.pennylane_id)).map((e) => e.id);
+    // Excluded only by the account filter (still unlettered): keep payments already sent with a client answer.
+    const close = (existing ?? [])
+      .filter((e) => e.is_open && !neededIds.has(e.pennylane_id))
+      .filter((e) => !(unletteredElsewhere.has(e.pennylane_id) && e.review_state === "sent" && e.status !== "a_faire"))
+      .map((e) => e.id);
     if (close.length) await db.from("transactions").update({ is_open: false }).in("id", close);
 
     await db.from("dossiers").update({ last_sync_at: new Date().toISOString(), last_sync_error: null }).eq("id", dossierId);

@@ -36,6 +36,13 @@
       "when": 1793218661508,
       "tag": "0004_assistant_chat",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793221609009,
+      "tag": "0005_detect_prefixes",
+      "breakpoints": true
     }
   ]
 }

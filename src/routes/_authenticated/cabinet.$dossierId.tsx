@@ -169,11 +169,11 @@ function DossierPage() {
   );
 }
 
-function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: string; company_id: string; collect_email: string | null; collect_email_customers: string | null }; onSaved: () => void }) {
-  const [f, setF] = useState({ name: dossier.name, company_id: dossier.company_id, collect_email: dossier.collect_email ?? "", collect_email_customers: dossier.collect_email_customers ?? "" });
+function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: string; company_id: string; collect_email: string | null; collect_email_customers: string | null; detect_prefixes: string }; onSaved: () => void }) {
+  const [f, setF] = useState({ name: dossier.name, company_id: dossier.company_id, collect_email: dossier.collect_email ?? "", collect_email_customers: dossier.collect_email_customers ?? "", detect_prefixes: dossier.detect_prefixes ?? "401, 411, 471" });
   async function save(e: React.FormEvent) {
     e.preventDefault();
-    const { error } = await supabase.from("dossiers").update({ ...f, collect_email: f.collect_email || null, collect_email_customers: f.collect_email_customers || null }).eq("id", dossier.id);
+    const { error } = await supabase.from("dossiers").update({ ...f, detect_prefixes: f.detect_prefixes.trim() || "401, 411, 471", collect_email: f.collect_email || null, collect_email_customers: f.collect_email_customers || null }).eq("id", dossier.id);
     if (error) { toast.error(error.message); return; }
     toast.success("Dossier enregistré");
     onSaved();
@@ -189,6 +189,8 @@ function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: st
             <Input type="email" placeholder="nom-du-dossier-XXXX@suppliers.pennylane.com" value={f.collect_email} onChange={(e) => setF({ ...f, collect_email: e.target.value })} /></div>
           <div className="space-y-1"><Label>Adresse de collecte ventes</Label>
             <Input type="email" placeholder="nom-du-dossier-XXXX@customers.pennylane.com" value={f.collect_email_customers} onChange={(e) => setF({ ...f, collect_email_customers: e.target.value })} /></div>
+          <div className="space-y-1"><Label>Comptes surveillés (non lettrés)</Label>
+            <Input placeholder="401, 411, 471" value={f.detect_prefixes} onChange={(e) => setF({ ...f, detect_prefixes: e.target.value })} /></div>
           <Button type="submit" variant="secondary" className="sm:col-span-3 sm:justify-self-start">Enregistrer</Button>
         </form>
       </CardContent>

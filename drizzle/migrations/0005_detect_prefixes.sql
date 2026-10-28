@@ -1,0 +1,1 @@
+ALTER TABLE public.dossiers ADD COLUMN IF NOT EXISTS detect_prefixes text NOT NULL DEFAULT '401, 411, 471';
