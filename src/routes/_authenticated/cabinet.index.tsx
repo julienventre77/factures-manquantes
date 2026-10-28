@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireCabinet, meQuery } from "@/lib/session";
 import { McpPanel } from "@/components/McpPanel";
+import { ImportDossiers } from "@/components/ImportDossiers";
 
 export const Route = createFileRoute("/_authenticated/cabinet/")({
   beforeLoad: requireCabinet,
@@ -59,6 +60,7 @@ function Cabinet() {
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         <h1 className="text-3xl font-semibold">Dossiers clients</h1>
         <McpPanel />
+        <ImportDossiers existing={(dossiers.data ?? []).map((d) => d.company_id)} />
         <div className="space-y-3">
           {dossiers.data?.length === 0 && <p className="text-muted-foreground">Aucun dossier pour l'instant.</p>}
           {dossiers.data?.map((d) => {

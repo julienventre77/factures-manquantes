@@ -276,3 +276,32 @@ export class McpNoAccess extends Error {
     super(`La connexion Pennylane (MCP) ne donne pas accès à l'entreprise ${companyId} : synchronisation bloquée pour ce dossier.`);
   }
 }
+
+// ---------- Company listing for import ----------
+export type McpCompany = { company_id: string; name: string };
+
+export async function mcpListCompanies(): Promise<McpCompany[]> {
+  const s = await openMcp();
+  try {
+    const ctx = await s.call<{ companies?: { id: number; name: string }[]; firms?: { id: number; name?: string }[] }>("get_context", {});
+    const map = new Map<string, string>();
+    for (const c of ctx.companies ?? []) map.set(String(c.id), c.name);
+    // Firm portfolios (only present with a firm-level connection) are enumerated via list_companies.
+    for (const f of ctx.firms ?? []) {
+      for (let page = 1; page <= 100; page++) {
+        let r: { companies?: { id: number; name: string }[] };
+        try {
+          r = await s.call("list_companies", { firm_id: f.id, page });
+        } catch {
+          break;
+        }
+        const items = r.companies ?? [];
+        for (const c of items) map.set(String(c.id), c.name);
+        if (items.length < 100) break;
+      }
+    }
+    return [...map].map(([company_id, name]) => ({ company_id, name })).sort((a, b) => a.name.localeCompare(b.name));
+  } finally {
+    await s.close().catch(() => {});
+  }
+}

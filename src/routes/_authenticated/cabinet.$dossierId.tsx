@@ -108,6 +108,9 @@ function DossierPage() {
             <p className="text-sm text-muted-foreground">
               Dernière synchronisation : {dossier.last_sync_at ? new Date(dossier.last_sync_at).toLocaleString("fr-FR") : "jamais"}
             </p>
+            {(!dossier.collect_email || !dossier.collect_email_customers) && (
+              <p className="text-sm font-medium text-destructive">Adresse de collecte à renseigner</p>
+            )}
             {dossier.last_sync_source && (
               <p className="text-sm text-muted-foreground">Source de la dernière synchronisation : {dossier.last_sync_source}</p>
             )}

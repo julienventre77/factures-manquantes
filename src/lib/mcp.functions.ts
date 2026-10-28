@@ -24,3 +24,11 @@ export const startMcpConnect = createServerFn({ method: "POST" })
     const { startOAuth } = await import("./mcp.server");
     return { url: await startOAuth(origin, context.userId) };
   });
+
+export const listMcpCompanies = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertCabinet(context);
+    const { mcpListCompanies } = await import("./mcp.server");
+    return { companies: await mcpListCompanies() };
+  });
