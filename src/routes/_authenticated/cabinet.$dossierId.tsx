@@ -1,20 +1,20 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Download, RefreshCw, UserPlus, Pencil } from "lucide-react";
+import { AlertTriangle, ChevronRight, Mail, RefreshCw, Save, UserPlus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ReviewPanel } from "@/components/ReviewPanel";
+import { LinesTable } from "@/components/LinesTable";
 import { QuestionsPanel } from "@/components/QuestionsPanel";
+import { SourcePill } from "@/components/StatusPill";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
-import { requireCabinet, meQuery, groupBySupplier, formatDate, formatEUR, STATUS_LABEL, type Tx } from "@/lib/session";
+import { formatSyncDate } from "@/lib/dates";
+import { requireCabinet, type Tx } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated/cabinet/$dossierId")({
   beforeLoad: requireCabinet,
@@ -30,13 +30,6 @@ export const Route = createFileRoute("/_authenticated/cabinet/$dossierId")({
   }),
   component: DossierPage,
 });
-
-const STATUS_CLS: Record<string, string> = {
-  a_faire: "bg-warning text-warning-foreground",
-  depose: "bg-success text-success-foreground",
-  email: "bg-secondary text-secondary-foreground",
-  sans_facture: "bg-destructive text-destructive-foreground",
-};
 
 function DossierPage() {
   const { dossierId } = Route.useParams();
@@ -90,85 +83,78 @@ function DossierPage() {
     reload();
   }
 
-  if (!q.data) return <div className="min-h-screen"><AppHeader space="cabinet" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
+  if (!q.data)
+    return <div className="space-cabinet min-h-screen bg-background"><AppHeader space="cabinet" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
   const { dossier, members, txs, uploads } = q.data;
-  const sent = txs.filter((t) => (t.review_state ?? "sent") === "sent");
-  const groups = groupBySupplier(sent);
 
   return (
-    <div className="min-h-screen">
+    <div className="space-cabinet min-h-screen bg-background">
       <AppHeader space="cabinet" />
-      <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
-        <Link to="/cabinet" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="h-4 w-4" /> Tous les dossiers
-        </Link>
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-semibold">{dossier.name}</h1>
-            <p className="text-sm text-muted-foreground">
-              Dernière synchronisation : {dossier.last_sync_at ? new Date(dossier.last_sync_at).toLocaleString("fr-FR") : "jamais"}
-            </p>
-            {(!dossier.collect_email || !dossier.collect_email_customers) && (
-              <p className="text-sm font-medium text-destructive">Adresse de collecte à renseigner</p>
-            )}
-            {dossier.last_sync_source && (
-              <p className="text-sm text-muted-foreground">Source de la dernière synchronisation : {dossier.last_sync_source}</p>
-            )}
-            {dossier.last_mcp_error && <p className="text-sm text-destructive">Erreur MCP : {dossier.last_mcp_error}</p>}
-            {dossier.last_sync_error && <p className="text-sm text-destructive">{dossier.last_sync_error}</p>}
+      <main className="mx-auto max-w-7xl space-y-5 px-4 py-6">
+        <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 text-sm">
+          <Link to="/cabinet" className="font-semibold text-primary hover:underline">Dossiers clients</Link>
+          <ChevronRight aria-hidden className="h-4 w-4 text-muted-foreground" />
+          <span className="text-muted-foreground">{dossier.name}</span>
+        </nav>
+
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="text-2xl sm:text-3xl">{dossier.name}</h1>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+              <span>company_id <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">{dossier.company_id}</span></span>
+              <span className="inline-flex items-center gap-1.5">
+                <Mail className="h-4 w-4" /> Adresse de collecte
+                {dossier.collect_email
+                  ? <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs text-foreground">{dossier.collect_email}</span>
+                  : <span className="font-semibold text-yellow-ink">à renseigner</span>}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+              <RefreshCw className="h-4 w-4" /> Dernière synchro : {dossier.last_sync_at ? formatSyncDate(dossier.last_sync_at) : "jamais"}
+              {dossier.last_sync_source && <SourcePill source={dossier.last_sync_source} />}
+              <span>· comptes {dossier.detect_prefixes}</span>
+            </div>
           </div>
-          <Button size="lg" onClick={sync} disabled={syncing}>
+          <Button variant="outline" onClick={sync} disabled={syncing}>
             <RefreshCw className={syncing ? "animate-spin" : ""} /> Actualiser maintenant
           </Button>
         </div>
 
-        <DossierSettings dossier={dossier} onSaved={reload} />
-        <Members dossierId={dossierId} members={members} onSaved={reload} />
+        {(dossier.last_mcp_error || dossier.last_sync_error) && (
+          <div role="alert" className="space-y-1 rounded-xl border border-destructive/30 bg-red-soft p-3 text-sm text-destructive">
+            {dossier.last_mcp_error && <p>Erreur MCP : {dossier.last_mcp_error}</p>}
+            {dossier.last_sync_error && <p>{dossier.last_sync_error}</p>}
+          </div>
+        )}
+        {(!dossier.collect_email || !dossier.collect_email_customers) && (
+          <Notice>
+            Adresse de collecte {!dossier.collect_email && !dossier.collect_email_customers ? "achats et ventes" : !dossier.collect_email ? "achats" : "ventes"} à renseigner :
+            sans elle, le client ne peut pas transférer ses factures par e-mail. <a href="#fiche" className="font-semibold underline">Compléter la fiche</a>
+          </Notice>
+        )}
+        {members.length === 0 && (
+          <Notice>
+            Aucun compte client : le client ne peut pas encore voir ses demandes. <a href="#comptes" className="font-semibold underline">Créer un compte</a>
+          </Notice>
+        )}
 
         <QuestionsPanel dossierId={dossierId} />
-        <ReviewPanel
-          pending={txs.filter((t) => t.review_state === "pending")}
-          dismissed={txs.filter((t) => t.review_state === "dismissed")}
-          onChanged={reload}
-        />
+        <LinesTable txs={txs} uploads={uploads} onChanged={reload} onRename={rename} onDownload={download} />
 
-        <section className="space-y-4">
-          <h2 className="text-2xl font-semibold">Envoyés au client — tiers ({groups.length})</h2>
-          {groups.length === 0 && <p className="text-muted-foreground">Aucune demande en cours.</p>}
-          {groups.map((g) => (
-            <Card key={g.key}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-lg">{g.name}</CardTitle>
-                <span className="text-sm text-muted-foreground">{g.direction === "in" ? "Client (vente)" : "Fournisseur (achat)"} · {g.txs.length} · {formatEUR(g.total)} · {g.state === "done" ? "Terminé" : g.state === "progress" ? "En cours" : "À faire"}</span>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {g.txs.map((t) => (
-                  <div key={t.id} className="rounded-lg border p-3 text-sm">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <span className="font-semibold">{formatEUR(Math.abs(Number(t.amount)))}</span>
-                        <span className="text-muted-foreground"> · {formatDate(t.date)} · {t.label}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge className={STATUS_CLS[t.status]}>{STATUS_LABEL[t.status]}</Badge>
-                        <Button variant="ghost" size="icon" title="Corriger le fournisseur" onClick={() => rename(t.supplier_detected, t.supplier)}>
-                          <Pencil />
-                        </Button>
-                      </div>
-                    </div>
-                    {t.comment && <p className="mt-2 rounded bg-muted p-2 italic">« {t.comment} »</p>}
-                    {uploads.filter((u) => u.transaction_id === t.id).map((u) => (
-                      <Button key={u.id} variant="link" size="sm" className="px-0" onClick={() => download(u.storage_path)}>
-                        <Download /> {u.file_name}
-                      </Button>
-                    ))}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          ))}
-        </section>
+        <div className="grid gap-5 lg:grid-cols-2">
+          <DossierSettings dossier={dossier} onSaved={reload} />
+          <Members dossierId={dossierId} members={members} onSaved={reload} />
+        </div>
       </main>
+    </div>
+  );
+}
+
+function Notice({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2 rounded-xl border border-yellow/60 bg-yellow-soft/60 p-3 text-sm text-yellow-ink">
+      <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+      <p>{children}</p>
     </div>
   );
 }
@@ -183,22 +169,22 @@ function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: st
     onSaved();
   }
   return (
-    <Card>
-      <CardHeader><CardTitle>Fiche du dossier</CardTitle></CardHeader>
-      <CardContent>
-        <form onSubmit={save} className="grid gap-4 sm:grid-cols-3">
-          <div className="space-y-1"><Label>Nom</Label><Input value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
-          <div className="space-y-1"><Label>company_id Pennylane</Label><Input value={f.company_id} onChange={(e) => setF({ ...f, company_id: e.target.value })} /></div>
-          <div className="space-y-1"><Label>Adresse de collecte achats</Label>
-            <Input type="email" placeholder="nom-du-dossier-XXXX@suppliers.pennylane.com" value={f.collect_email} onChange={(e) => setF({ ...f, collect_email: e.target.value })} /></div>
-          <div className="space-y-1"><Label>Adresse de collecte ventes</Label>
-            <Input type="email" placeholder="nom-du-dossier-XXXX@customers.pennylane.com" value={f.collect_email_customers} onChange={(e) => setF({ ...f, collect_email_customers: e.target.value })} /></div>
-          <div className="space-y-1"><Label>Comptes surveillés (non lettrés)</Label>
-            <Input placeholder="401, 411, 471" value={f.detect_prefixes} onChange={(e) => setF({ ...f, detect_prefixes: e.target.value })} /></div>
-          <Button type="submit" variant="secondary" className="sm:col-span-3 sm:justify-self-start">Enregistrer</Button>
-        </form>
-      </CardContent>
-    </Card>
+    <section id="fiche" className="scroll-mt-6 rounded-xl border bg-card p-5 shadow-sm">
+      <h2 className="text-lg">Fiche du dossier</h2>
+      <form onSubmit={save} className="mt-4 grid gap-4 sm:grid-cols-2">
+        <div className="space-y-1"><Label htmlFor="f-name">Nom</Label><Input id="f-name" value={f.name} onChange={(e) => setF({ ...f, name: e.target.value })} /></div>
+        <div className="space-y-1"><Label htmlFor="f-company">company_id Pennylane</Label><Input id="f-company" className="font-mono" value={f.company_id} onChange={(e) => setF({ ...f, company_id: e.target.value })} /></div>
+        <div className="space-y-1"><Label htmlFor="f-collect">Adresse de collecte achats</Label>
+          <Input id="f-collect" type="email" className="font-mono" placeholder="nom-du-dossier-XXXX@suppliers.pennylane.com" value={f.collect_email} onChange={(e) => setF({ ...f, collect_email: e.target.value })} /></div>
+        <div className="space-y-1"><Label htmlFor="f-collect-customers">Adresse de collecte ventes</Label>
+          <Input id="f-collect-customers" type="email" className="font-mono" placeholder="nom-du-dossier-XXXX@customers.pennylane.com" value={f.collect_email_customers} onChange={(e) => setF({ ...f, collect_email_customers: e.target.value })} /></div>
+        <div className="space-y-1"><Label htmlFor="f-prefixes">Comptes surveillés (non lettrés)</Label>
+          <Input id="f-prefixes" className="font-mono" placeholder="401, 411, 471" value={f.detect_prefixes} onChange={(e) => setF({ ...f, detect_prefixes: e.target.value })} /></div>
+        <div className="flex items-end">
+          <Button type="submit"><Save /> Enregistrer</Button>
+        </div>
+      </form>
+    </section>
   );
 }
 
@@ -221,18 +207,18 @@ function Members({ dossierId, members, onSaved }: { dossierId: string; members: 
     }
   }
   return (
-    <Card>
-      <CardHeader><CardTitle>Comptes clients rattachés</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
+    <section id="comptes" className="scroll-mt-6 rounded-xl border bg-card p-5 shadow-sm">
+      <h2 className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Comptes clients rattachés</h2>
+      <div className="mt-3">
         {members.length === 0 ? <p className="text-sm text-muted-foreground">Aucun compte.</p> : (
-          <ul className="space-y-1 text-sm">{members.map((m) => <li key={m.id}>{m.email}</li>)}</ul>
+          <ul className="space-y-1 text-sm">{members.map((m) => <li key={m.id} className="font-mono">{m.email}</li>)}</ul>
         )}
-        <form onSubmit={add} className="grid gap-3 sm:grid-cols-3">
-          <Input type="email" required placeholder="E-mail du client" value={email} onChange={(e) => setEmail(e.target.value)} />
-          <Input type="text" required minLength={8} placeholder="Mot de passe initial (8+)" value={password} onChange={(e) => setPassword(e.target.value)} />
-          <Button type="submit" disabled={busy}><UserPlus /> Créer le compte</Button>
-        </form>
-      </CardContent>
-    </Card>
+      </div>
+      <form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+        <Input type="email" required placeholder="E-mail du client" aria-label="E-mail du client" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input type="text" required minLength={8} placeholder="Mot de passe initial (8+)" aria-label="Mot de passe initial" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" disabled={busy}><UserPlus /> Créer le compte</Button>
+      </form>
+    </section>
   );
 }

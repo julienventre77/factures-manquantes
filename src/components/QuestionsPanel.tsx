@@ -3,7 +3,6 @@ import { MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function QuestionsPanel({ dossierId }: { dossierId: string }) {
   const q = useQuery({
@@ -20,13 +19,18 @@ export function QuestionsPanel({ dossierId }: { dossierId: string }) {
     q.refetch();
   }
   const list = q.data ?? [];
+  // Only shown once the client has forwarded a question through the assistant.
+  if (list.length === 0) return null;
+  const open = list.filter((x) => !x.handled).length;
   return (
-    <Card>
-      <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><MessageSquare className="h-5 w-5" /> Questions transmises par le client ({list.filter((x) => !x.handled).length})</CardTitle></CardHeader>
-      <CardContent className="space-y-3">
-        {list.length === 0 && <p className="text-sm text-muted-foreground">Aucune question.</p>}
+    <section className={`rounded-xl border bg-card p-5 shadow-sm ${open ? "border-yellow" : ""}`}>
+      <h2 className="flex items-center gap-2 text-lg">
+        <MessageSquare className="h-5 w-5" /> Questions transmises par le client
+        {open > 0 && <span className="rounded-full bg-yellow-soft px-2 py-0.5 text-sm font-bold text-yellow-ink">{open} à traiter</span>}
+      </h2>
+      <div className="mt-3 space-y-3">
         {list.map((x) => (
-          <div key={x.id} className="rounded-md border p-3">
+          <div key={x.id} className={`rounded-lg border p-3 ${x.handled ? "opacity-70" : ""}`}>
             <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {new Date(x.created_at).toLocaleString("fr-FR")} · {x.user_email}
               {x.context && <Badge variant="outline">{x.context.replace(/^achat:/, "Fournisseur : ").replace(/^vente:/, "Client : ")}</Badge>}
@@ -38,7 +42,7 @@ export function QuestionsPanel({ dossierId }: { dossierId: string }) {
             </Button>
           </div>
         ))}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }
