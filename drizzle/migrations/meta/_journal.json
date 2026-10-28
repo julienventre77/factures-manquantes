@@ -50,6 +50,13 @@
       "when": 1793222833954,
       "tag": "0006_pennylane_mcp",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793224621919,
+      "tag": "0007_cabinet_chat",
+      "breakpoints": true
     }
   ]
 }
