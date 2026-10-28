@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
-import { HelpCircle, Send, Forward, Loader2 } from "lucide-react";
+import { Bot, Send, Forward, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -58,13 +58,19 @@ export function HelpChat({ groupKey }: { groupKey?: string | null }) {
 
   return (
     <>
-      <Button size="lg" className="fixed bottom-5 right-5 z-40 rounded-full shadow-lg" onClick={() => setOpen(true)}>
-        <HelpCircle /> Besoin d'aide ?
-      </Button>
+      <button
+        type="button"
+        aria-label="Ouvrir l'assistant"
+        title="Besoin d'aide ?"
+        onClick={() => setOpen(true)}
+        className="fixed bottom-5 right-5 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform duration-200 hover:scale-110 hover:shadow-xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+      >
+        <Bot className="h-7 w-7" />
+      </button>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
           <SheetHeader className="border-b p-4">
-            <SheetTitle>Assistant PBC List</SheetTitle>
+            <SheetTitle className="flex items-center gap-2"><Bot className="h-5 w-5 text-primary" /> Assistant PBC List</SheetTitle>
             <SheetDescription>Je vous guide pour transmettre vos factures.</SheetDescription>
           </SheetHeader>
           <div className="flex-1 space-y-3 overflow-y-auto p-4">
