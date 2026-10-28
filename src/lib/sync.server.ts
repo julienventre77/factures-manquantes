@@ -74,11 +74,11 @@ export async function syncDossier(dossierId: string) {
         `Le jeton Pennylane est lié à l'entreprise ${me.company.id}, pas au company_id ${dossier.company_id} de ce dossier.`,
       );
 
-    // 1. Outgoing, non-archived bank transactions
+    // 1. Outgoing and incoming non-archived bank transactions
     const since = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10);
     const outgoing = (
       await plAll<PlTx>("/transactions", [{ field: "date", operator: "gteq", value: since }], dossier.company_id, token)
-    ).filter((t) => !t.archived_at && Number(t.amount) < 0);
+    ).filter((t) => !t.archived_at && Number(t.amount) !== 0);
 
     // 2. Criterion: a payment is "non lettré" when a counterpart line (not on a 512 account)
     //    of its bank ledger entry has no lettering. The ledger entry id equals the transaction id.
@@ -112,7 +112,7 @@ export async function syncDossier(dossierId: string) {
       // Fallback to the previous criterion if accounting lines are unavailable.
       console.error("Lettering unavailable, fallback", e);
       needed = [];
-      for (const t of outgoing.filter((x) => x.attachment_required)) {
+      for (const t of outgoing.filter((x) => x.attachment_required && Number(x.amount) < 0)) {
         const m = await pl<{ items: { type: string }[] }>(`/transactions/${t.id}/matched_invoices`, dossier.company_id, token);
         if (!m.items.some((i) => i.type === "supplier")) needed.push(t);
         await sleep(220);
@@ -139,6 +139,7 @@ export async function syncDossier(dossierId: string) {
           supplier_detected: detected,
           supplier: aliasMap.get(detected) ?? detected,
           review_state: "pending",
+          direction: Number(t.amount) < 0 ? "out" : "in",
           counterpart_accounts: (counterparts.get(String(t.id)) ?? []).join(", ") || null,
         };
       });
