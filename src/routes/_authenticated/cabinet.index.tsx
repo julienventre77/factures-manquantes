@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { meQuery } from "@/lib/session";
+import { McpPanel } from "@/components/McpPanel";
 
 export const Route = createFileRoute("/_authenticated/cabinet/")({
   beforeLoad: async ({ context }) => {
@@ -60,6 +61,7 @@ function Cabinet() {
       <AppHeader subtitle="Espace cabinet" />
       <main className="mx-auto max-w-4xl space-y-8 px-4 py-8">
         <h1 className="text-3xl font-semibold">Dossiers clients</h1>
+        <McpPanel />
         <div className="space-y-3">
           {dossiers.data?.length === 0 && <p className="text-muted-foreground">Aucun dossier pour l'instant.</p>}
           {dossiers.data?.map((d) => {

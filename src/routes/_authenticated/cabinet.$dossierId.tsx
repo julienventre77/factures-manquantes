@@ -111,6 +111,10 @@ function DossierPage() {
             <p className="text-sm text-muted-foreground">
               Dernière synchronisation : {dossier.last_sync_at ? new Date(dossier.last_sync_at).toLocaleString("fr-FR") : "jamais"}
             </p>
+            {dossier.last_sync_source && (
+              <p className="text-sm text-muted-foreground">Source de la dernière synchronisation : {dossier.last_sync_source}</p>
+            )}
+            {dossier.last_mcp_error && <p className="text-sm text-destructive">Erreur MCP : {dossier.last_mcp_error}</p>}
             {dossier.last_sync_error && <p className="text-sm text-destructive">{dossier.last_sync_error}</p>}
           </div>
           <Button size="lg" onClick={sync} disabled={syncing}>
