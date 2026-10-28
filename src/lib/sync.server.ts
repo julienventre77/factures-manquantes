@@ -10,6 +10,13 @@ type PlTx = {
   amount: string;
   attachment_required: boolean;
   archived_at: string | null;
+  journal?: { id: number } | null;
+};
+
+type PlLine = {
+  ledger_entry: { id: number };
+  ledger_account: { number: string };
+  lettered_ledger_entry_lines?: { ids: number[] };
 };
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -33,6 +40,22 @@ async function pl<T>(path: string, companyId: string, token: string): Promise<T>
     return (await res.json()) as T;
   }
   throw new Error("Pennylane : trop de requêtes, réessayez plus tard.");
+}
+
+async function plAll<T>(path: string, filter: unknown[], companyId: string, token: string): Promise<T[]> {
+  const out: T[] = [];
+  const f = encodeURIComponent(JSON.stringify(filter));
+  let cursor: string | null = null;
+  do {
+    const page: { items: T[]; has_more: boolean; next_cursor: string | null } = await pl(
+      `${path}?limit=100&filter=${f}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`,
+      companyId,
+      token,
+    );
+    out.push(...page.items);
+    cursor = page.has_more ? page.next_cursor : null;
+  } while (cursor);
+  return out;
 }
 
 export async function syncDossier(dossierId: string) {
@@ -116,6 +139,7 @@ export async function syncDossier(dossierId: string) {
           supplier_detected: detected,
           supplier: aliasMap.get(detected) ?? detected,
           review_state: "pending",
+          counterpart_accounts: (counterparts.get(String(t.id)) ?? []).join(", ") || null,
         };
       });
     if (inserts.length) {

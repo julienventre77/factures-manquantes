@@ -73,6 +73,9 @@ export function ReviewPanel({ pending, dismissed, onChanged }: { pending: Tx[]; 
                   <Checkbox checked={sel.has(t.id)} onCheckedChange={(v) => toggle([t.id], v === true)} />
                   <span className="font-semibold">{formatEUR(Math.abs(Number(t.amount)))}</span>
                   <span className="text-muted-foreground">{formatDate(t.date)} · {t.label}</span>
+                  {t.counterpart_accounts && (
+                    <Badge variant="outline" className="ml-auto">Compte {t.counterpart_accounts}</Badge>
+                  )}
                 </label>
               ))}
             </CardContent>
