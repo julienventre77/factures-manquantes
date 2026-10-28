@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      cabinet_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          dossier_id: string | null
+          id: string
+          role: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          dossier_id?: string | null
+          id?: string
+          role: string
+          user_id?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          dossier_id?: string | null
+          id?: string
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cabinet_chat_messages_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cabinet_questions: {
         Row: {
           context: string | null
