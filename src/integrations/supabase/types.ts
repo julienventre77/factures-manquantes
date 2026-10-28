@@ -116,6 +116,7 @@ export type Database = {
           is_open: boolean
           label: string
           pennylane_id: string
+          review_state: string
           status: Database["public"]["Enums"]["tx_status"]
           supplier: string
           supplier_detected: string
@@ -131,6 +132,7 @@ export type Database = {
           is_open?: boolean
           label: string
           pennylane_id: string
+          review_state?: string
           status?: Database["public"]["Enums"]["tx_status"]
           supplier: string
           supplier_detected: string
@@ -146,6 +148,7 @@ export type Database = {
           is_open?: boolean
           label?: string
           pennylane_id?: string
+          review_state?: string
           status?: Database["public"]["Enums"]["tx_status"]
           supplier?: string
           supplier_detected?: string
