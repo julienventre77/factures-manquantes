@@ -215,8 +215,11 @@ export async function syncDossier(dossierId: string) {
       .map((e) => e.id);
     if (close.length) await db.from("transactions").update({ is_open: false }).in("id", close);
 
-    await db.from("dossiers").update({ last_sync_at: new Date().toISOString(), last_sync_error: null }).eq("id", dossierId);
-    return { added: inserts.length, closed: close.length, open: needed.length };
+    await db
+      .from("dossiers")
+      .update({ last_sync_at: new Date().toISOString(), last_sync_error: null, last_sync_source: source, last_mcp_error: mcpError })
+      .eq("id", dossierId);
+    return { added: inserts.length, closed: close.length, open: needed.length, source };
   } catch (e) {
     const msg = (e as Error).message;
     await db.from("dossiers").update({ last_sync_error: msg }).eq("id", dossierId);
