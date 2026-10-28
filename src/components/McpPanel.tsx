@@ -35,7 +35,10 @@ export function McpPanel() {
     <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border bg-card p-5">
       <div>
         <div className="font-semibold">Pennylane (MCP)</div>
-        {s === "connected" && <p className="text-sm text-muted-foreground">Connecté — la synchronisation passe par le MCP.</p>}
+        {s === "connected" && status.data?.needsReauth && (
+          <p className="text-sm text-destructive">Nouvelle autorisation nécessaire : veuillez reconnecter Pennylane (MCP)</p>
+        )}
+        {s === "connected" && !status.data?.needsReauth && <p className="text-sm text-muted-foreground">Connecté — la synchronisation passe par le MCP.</p>}
         {s === "expired" && <p className="text-sm text-destructive">Connexion Pennylane (MCP) expirée : veuillez reconnecter</p>}
         {(!s || s === "disconnected") && (
           <p className="text-sm text-muted-foreground">Non connecté — la synchronisation utilise l'API (secours).</p>
