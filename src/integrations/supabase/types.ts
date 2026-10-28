@@ -130,8 +130,10 @@ export type Database = {
           created_at: string
           detect_prefixes: string
           id: string
+          last_mcp_error: string | null
           last_sync_at: string | null
           last_sync_error: string | null
+          last_sync_source: string | null
           name: string
         }
         Insert: {
@@ -141,8 +143,10 @@ export type Database = {
           created_at?: string
           detect_prefixes?: string
           id?: string
+          last_mcp_error?: string | null
           last_sync_at?: string | null
           last_sync_error?: string | null
+          last_sync_source?: string | null
           name: string
         }
         Update: {
@@ -152,9 +156,59 @@ export type Database = {
           created_at?: string
           detect_prefixes?: string
           id?: string
+          last_mcp_error?: string | null
           last_sync_at?: string | null
           last_sync_error?: string | null
+          last_sync_source?: string | null
           name?: string
+        }
+        Relationships: []
+      }
+      mcp_connection: {
+        Row: {
+          expires_at: string | null
+          id: number
+          last_error: string | null
+          secret_blob: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          expires_at?: string | null
+          id?: number
+          last_error?: string | null
+          secret_blob?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          expires_at?: string | null
+          id?: number
+          last_error?: string | null
+          secret_blob?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      mcp_oauth_states: {
+        Row: {
+          created_at: string
+          created_by: string
+          secret_blob: string
+          state: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          secret_blob: string
+          state: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          secret_blob?: string
+          state?: string
         }
         Relationships: []
       }
