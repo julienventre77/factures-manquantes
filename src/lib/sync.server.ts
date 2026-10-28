@@ -21,6 +21,21 @@ type PlLine = {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+export const NO_ACCESS_MSG = "Le jeton Pennylane actuel ne donne pas accès à ce dossier. Un jeton cabinet est nécessaire.";
+
+// Lightweight access check with the dossier's X-Company-Id (company or firm token).
+async function checkAccess(companyId: string, token: string) {
+  const headers = { Authorization: `Bearer ${token}`, "X-Company-Id": companyId, Accept: "application/json" };
+  const me = await fetch(`${BASE}/me`, { headers });
+  if (me.status === 403 || me.status === 404) throw new Error(NO_ACCESS_MSG);
+  if (me.ok) {
+    const body = (await me.json()) as { company?: { id: number } | null };
+    if (body.company?.id && String(body.company.id) !== String(companyId).trim()) throw new Error(NO_ACCESS_MSG);
+  }
+  const probe = await fetch(`${BASE}/transactions?limit=1`, { headers });
+  if (probe.status === 403 || probe.status === 404) throw new Error(NO_ACCESS_MSG);
+}
+
 export const DEFAULT_PREFIXES = "401, 411, 471";
 export function parsePrefixes(s: string | null | undefined): string[] {
   const list = (s ?? DEFAULT_PREFIXES).split(/[,;\s]+/).map((p) => p.trim()).filter((p) => /^\d+$/.test(p));
@@ -76,12 +91,7 @@ export async function syncDossier(dossierId: string) {
   if (dErr || !dossier) throw new Error("Dossier introuvable");
 
   try {
-    // Guard: a company-bound token ignores X-Company-Id, so it must match this dossier.
-    const me = await pl<{ company?: { id: number } | null }>("/me", dossier.company_id, token);
-    if (me.company?.id && String(me.company.id) !== String(dossier.company_id).trim())
-      throw new Error(
-        `Le jeton Pennylane est lié à l'entreprise ${me.company.id}, pas au company_id ${dossier.company_id} de ce dossier.`,
-      );
+    await checkAccess(dossier.company_id, token);
 
     // 1. Outgoing and incoming non-archived bank transactions
     const since = new Date(Date.now() - LOOKBACK_DAYS * 86400000).toISOString().slice(0, 10);
