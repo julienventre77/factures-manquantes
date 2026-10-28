@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
 import { Bot, Send, Forward, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { SafeMarkdown } from "@/components/SafeMarkdown";
 import { getChatHistory, sendChatMessage, forwardQuestion } from "@/lib/assistant.functions";
 
 export type ChatMsg = { id: string; role: string; content: string; escalate?: boolean; question?: string };
@@ -140,7 +140,7 @@ export function ChatPanel({
           {msgs.map((m) => (
             <div key={m.id} className={m.role === "user" ? "ml-8 rounded-2xl rounded-br-md bg-primary p-3 text-sm text-primary-foreground" : "mr-4 rounded-2xl rounded-bl-md bg-pale-2 p-3 text-sm"}>
               {m.role === "user" ? m.content : (
-                <div className="prose prose-sm max-w-none text-foreground"><ReactMarkdown>{m.content}</ReactMarkdown></div>
+                <div className="prose prose-sm max-w-none text-foreground"><SafeMarkdown>{m.content}</SafeMarkdown></div>
               )}
               {renderExtra?.(m)}
             </div>

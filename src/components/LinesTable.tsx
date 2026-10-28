@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  ArrowDownLeft, ArrowUpRight, Ban, CheckCircle2, ChevronDown, Download, Eye, Inbox, Pencil, RotateCcw, Search, Send, ListFilter,
+  ArrowDownLeft, ArrowUpRight, Ban, CheckCircle2, ChevronDown, Download, Eye, Inbox, Pencil, RotateCcw, Search, Send, ListFilter, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,10 @@ const stateOf = (t: Tx): Exclude<Tab, "all"> =>
 const selectable = (t: Tx) => t.review_state === "pending" || t.review_state === "dismissed";
 const accountsOf = (t: Tx) => (t.counterpart_accounts ?? "").split(",").map((a) => a.trim()).filter(Boolean);
 const PAGE = 100;
+// Ids per update: hundreds of ids in one request make its URL too long.
+const BATCH = 100;
+const supplierLabel = (name: string) => (name === "Autre" ? "Tiers non identifié" : name);
+const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 // All the open lines of a dossier in one table: review, bulk actions, search, filters and sorting.
 export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
@@ -33,6 +37,7 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
 }) {
   const [tab, setTab] = useState<Tab>(() => (txs.some((t) => t.review_state === "pending") ? "pending" : "all"));
   const [query, setQuery] = useState("");
+  const [supplier, setSupplier] = useState<string | null>(null);
   const [dir, setDir] = useState<"all" | "out" | "in">("all");
   const [account, setAccount] = useState("all");
   const [sort, toggleSort] = useSort<SortKey>({ key: "date", dir: "desc" });
@@ -43,6 +48,7 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
   const prefixes = [...new Set(txs.flatMap((t) => accountsOf(t).map((a) => a.slice(0, 3))))].sort();
   const base = txs.filter(
     (t) =>
+      (supplier === null || t.supplier === supplier) &&
       (dir === "all" || t.direction === dir) &&
       (account === "all" || accountsOf(t).some((a) => a.startsWith(account))) &&
       matchesSearch(txHaystack(t), query),
@@ -72,36 +78,51 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
   async function setState(ids: string[], review_state: "sent" | "dismissed" | "pending", msg: string) {
     if (!ids.length) return;
     setBusy(true);
-    const { error } = await supabase.from("transactions").update({ review_state }).in("id", ids);
+    const done: string[] = [];
+    let failure: string | null = null;
+    for (let i = 0; i < ids.length; i += BATCH) {
+      const part = ids.slice(i, i + BATCH);
+      const { error } = await supabase.from("transactions").update({ review_state }).in("id", part);
+      if (error) { failure = error.message; break; }
+      done.push(...part);
+    }
     setBusy(false);
-    if (error) { toast.error(error.message); return; }
-    toast.success(msg);
-    toggle(ids, false);
-    onChanged();
+    if (done.length) { toggle(done, false); onChanged(); }
+    if (failure) toast.error(done.length ? `${plural(done.length, "ligne")} sur ${ids.length} traitée${done.length > 1 ? "s" : ""}, puis erreur : ${failure}` : failure);
+    else toast.success(msg);
   }
-  const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
+  const filterBy = (set: () => void) => { set(); setLimit(PAGE); };
 
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <FilterChip size="sm" active={tab === "all"} onClick={() => setTab("all")} count={base.length}>Toutes</FilterChip>
-        <FilterChip size="sm" active={tab === "pending"} onClick={() => setTab("pending")} count={count("pending")} icon={Eye}>À valider</FilterChip>
-        <FilterChip size="sm" active={tab === "waiting"} onClick={() => setTab("waiting")} count={count("waiting")} icon={Send}>En attente du client</FilterChip>
-        <FilterChip size="sm" active={tab === "answered"} onClick={() => setTab("answered")} count={count("answered")} icon={Inbox}>Réponses reçues</FilterChip>
-        <FilterChip size="sm" active={tab === "dismissed"} onClick={() => setTab("dismissed")} count={count("dismissed")} icon={Ban}>Non demandées</FilterChip>
+        <FilterChip size="sm" active={tab === "all"} onClick={() => filterBy(() => setTab("all"))} count={base.length}>Toutes</FilterChip>
+        <FilterChip size="sm" active={tab === "pending"} onClick={() => filterBy(() => setTab("pending"))} count={count("pending")} icon={Eye}>À valider</FilterChip>
+        <FilterChip size="sm" active={tab === "waiting"} onClick={() => filterBy(() => setTab("waiting"))} count={count("waiting")} icon={Send}>En attente du client</FilterChip>
+        <FilterChip size="sm" active={tab === "answered"} onClick={() => filterBy(() => setTab("answered"))} count={count("answered")} icon={Inbox}>Réponses reçues</FilterChip>
+        <FilterChip size="sm" active={tab === "dismissed"} onClick={() => filterBy(() => setTab("dismissed"))} count={count("dismissed")} icon={Ban}>Non demandées</FilterChip>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
         <label className="relative min-w-[16rem] flex-1">
           <span className="sr-only">Rechercher une ligne</span>
           <Search aria-hidden className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input type="search" value={query} onChange={(e) => { setQuery(e.target.value); setLimit(PAGE); }}
+          <Input type="search" value={query} onChange={(e) => filterBy(() => setQuery(e.target.value))}
             placeholder="Libellé, tiers, montant ou date" className="h-9 bg-card pl-9" />
         </label>
-        <Select label="Sens" value={dir} onChange={(v) => setDir(v as typeof dir)}
+        {supplier !== null && (
+          <span className="inline-flex h-9 items-center gap-1 rounded-full border border-primary/30 bg-pale-2 pl-3 pr-1 text-sm font-semibold text-primary">
+            Tiers : {supplierLabel(supplier)}
+            <button type="button" aria-label={`Retirer le filtre sur le tiers ${supplierLabel(supplier)}`} onClick={() => filterBy(() => setSupplier(null))}
+              className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-pale focus-visible:outline-2 focus-visible:outline-primary">
+              <X className="h-4 w-4" />
+            </button>
+          </span>
+        )}
+        <Select label="Sens" value={dir} onChange={(v) => filterBy(() => setDir(v as typeof dir))}
           options={[["all", "Achats et ventes"], ["out", "Achats"], ["in", "Ventes"]]} />
         {prefixes.length > 1 && (
-          <Select label="Compte" value={account} onChange={setAccount}
+          <Select label="Compte" value={account} onChange={(v) => filterBy(() => setAccount(v))}
             options={[["all", "Tous les comptes"], ...prefixes.map((p) => [p, `Compte ${p}`] as [string, string])]} />
         )}
       </div>
@@ -189,9 +210,10 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
                   </td>
                   <td className="px-3 py-2.5">
                     <span className="flex items-center gap-1">
-                      <button type="button" title="Afficher seulement ce tiers" onClick={() => { setQuery(t.supplier); setLimit(PAGE); }}
+                      <button type="button" title="Afficher seulement ce tiers" aria-label={`${supplierLabel(t.supplier)} : afficher seulement ce tiers`}
+                        onClick={() => filterBy(() => setSupplier(t.supplier))}
                         className={cn("text-left hover:underline", t.supplier === "Autre" && "italic text-muted-foreground")}>
-                        {t.supplier === "Autre" ? "Tiers non identifié" : t.supplier}
+                        {supplierLabel(t.supplier)}
                       </button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground" title="Corriger le tiers"
                         aria-label={`Corriger le tiers ${t.supplier}`} onClick={() => onRename(t.supplier_detected, t.supplier)}>
