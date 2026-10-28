@@ -14,16 +14,233 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      dossier_members: {
+        Row: {
+          created_at: string
+          dossier_id: string
+          email: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          dossier_id: string
+          email: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          dossier_id?: string
+          email?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dossier_members_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dossiers: {
+        Row: {
+          collect_email: string | null
+          company_id: string
+          created_at: string
+          id: string
+          last_sync_at: string | null
+          last_sync_error: string | null
+          name: string
+        }
+        Insert: {
+          collect_email?: string | null
+          company_id: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          name: string
+        }
+        Update: {
+          collect_email?: string | null
+          company_id?: string
+          created_at?: string
+          id?: string
+          last_sync_at?: string | null
+          last_sync_error?: string | null
+          name?: string
+        }
+        Relationships: []
+      }
+      supplier_aliases: {
+        Row: {
+          detected_name: string
+          display_name: string
+          dossier_id: string
+          id: string
+        }
+        Insert: {
+          detected_name: string
+          display_name: string
+          dossier_id: string
+          id?: string
+        }
+        Update: {
+          detected_name?: string
+          display_name?: string
+          dossier_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_aliases_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          comment: string | null
+          created_at: string
+          date: string
+          dossier_id: string
+          id: string
+          is_open: boolean
+          label: string
+          pennylane_id: string
+          status: Database["public"]["Enums"]["tx_status"]
+          supplier: string
+          supplier_detected: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          comment?: string | null
+          created_at?: string
+          date: string
+          dossier_id: string
+          id?: string
+          is_open?: boolean
+          label: string
+          pennylane_id: string
+          status?: Database["public"]["Enums"]["tx_status"]
+          supplier: string
+          supplier_detected: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          comment?: string | null
+          created_at?: string
+          date?: string
+          dossier_id?: string
+          id?: string
+          is_open?: boolean
+          label?: string
+          pennylane_id?: string
+          status?: Database["public"]["Enums"]["tx_status"]
+          supplier?: string
+          supplier_detected?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      uploads: {
+        Row: {
+          created_at: string
+          dossier_id: string
+          file_name: string
+          id: string
+          storage_path: string
+          transaction_id: string
+          uploaded_by: string
+        }
+        Insert: {
+          created_at?: string
+          dossier_id: string
+          file_name: string
+          id?: string
+          storage_path: string
+          transaction_id: string
+          uploaded_by?: string
+        }
+        Update: {
+          created_at?: string
+          dossier_id?: string
+          file_name?: string
+          id?: string
+          storage_path?: string
+          transaction_id?: string
+          uploaded_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "uploads_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "uploads_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_member: { Args: { _dossier_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "cabinet" | "client"
+      tx_status: "a_faire" | "depose" | "email" | "sans_facture"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +367,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["cabinet", "client"],
+      tx_status: ["a_faire", "depose", "email", "sans_facture"],
+    },
   },
 } as const
