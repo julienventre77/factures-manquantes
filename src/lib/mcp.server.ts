@@ -18,10 +18,10 @@ export const CALLBACK_PATH = "/api/public/pennylane-mcp/callback";
 
 type Secrets = {
   client_id: string;
-  client_secret?: string;
+  client_secret?: string | undefined;
   redirect_uri: string;
   access_token?: string;
-  refresh_token?: string;
+  refresh_token?: string | undefined;
   expires_at?: number; // ms
 };
 
@@ -42,7 +42,7 @@ export async function encrypt(obj: unknown) {
   return `${b64(iv)}.${b64(ct)}`;
 }
 export async function decrypt<T>(blob: string): Promise<T> {
-  const [iv, ct] = blob.split(".");
+  const [iv = "", ct = ""] = blob.split(".");
   const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv: unb64(iv) }, await key(), unb64(ct));
   return JSON.parse(new TextDecoder().decode(pt)) as T;
 }
