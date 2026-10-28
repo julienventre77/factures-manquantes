@@ -61,8 +61,8 @@ function DossierPage() {
   async function sync() {
     setSyncing(true);
     try {
-      await syncDossierNow({ data: { dossierId } });
-      toast.success("Synchronisation terminée");
+      const r = await syncDossierNow({ data: { dossierId } });
+      toast.success(`Synchronisation terminée : ${r.open} demande(s) en cours, ${r.added} nouvelle(s), ${r.closed} justifiée(s) entre-temps.`);
       reload();
     } catch (e) {
       toast.error((e as Error).message);
