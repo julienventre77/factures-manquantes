@@ -12,7 +12,10 @@ export const MCP_SCOPES = [
   "mcp:ledger_entry_line:read",
   "mcp:supplier:read",
   "mcp:customer:read",
+  "mcp:company:read", // get_context
+  "mcp:companies:read", // list_companies (firm portfolio)
 ].join(" ");
+export const MCP_REAUTH_MSG = "Nouvelle autorisation nécessaire : veuillez reconnecter Pennylane (MCP)";
 export const MCP_EXPIRED_MSG = "Connexion Pennylane (MCP) expirée : veuillez reconnecter";
 export const CALLBACK_PATH = "/api/public/pennylane-mcp/callback";
 
@@ -23,6 +26,7 @@ type Secrets = {
   access_token?: string;
   refresh_token?: string | undefined;
   expires_at?: number; // ms
+  scopes?: string; // scopes requested when this token was granted
 };
 
 const db = async () => (await import("@/integrations/supabase/client.server")).supabaseAdmin;
@@ -70,14 +74,19 @@ async function setStatus(status: string, lastError: string | null) {
 
 export async function getMcpPublicStatus() {
   const { data } = await (await db()).from("mcp_connection").select("status, last_error, updated_at").eq("id", 1).maybeSingle();
-  return { status: data?.status ?? "disconnected", error: data?.last_error ?? null, updatedAt: data?.updated_at ?? null };
+  let needsReauth = false;
+  if (data?.status === "connected") {
+    const { secrets } = await loadSecrets().catch(() => ({ secrets: null }));
+    needsReauth = !!secrets && secrets.scopes !== MCP_SCOPES;
+  }
+  return { status: data?.status ?? "disconnected", error: data?.last_error ?? null, updatedAt: data?.updated_at ?? null, needsReauth };
 }
 
 // ---------- OAuth: start (DCR + PKCE) ----------
 export async function startOAuth(origin: string, userId: string) {
   const redirect_uri = `${origin}${CALLBACK_PATH}`;
   const { secrets } = await loadSecrets();
-  let client = secrets && secrets.redirect_uri === redirect_uri ? { client_id: secrets.client_id, client_secret: secrets.client_secret } : null;
+  let client = secrets && secrets.redirect_uri === redirect_uri && secrets.scopes === MCP_SCOPES ? { client_id: secrets.client_id, client_secret: secrets.client_secret } : null;
   if (!client) {
     const res = await fetch(`${AUTH_BASE}/register`, {
       method: "POST",
@@ -151,6 +160,7 @@ export async function finishOAuth(state: string, code: string) {
       access_token: tok.access_token,
       refresh_token: tok.refresh_token,
       expires_at: Date.now() + (tok.expires_in ?? 3600) * 1000,
+      scopes: MCP_SCOPES,
     },
     "connected",
     null,
@@ -280,7 +290,20 @@ export class McpNoAccess extends Error {
 // ---------- Company listing for import ----------
 export type McpCompany = { company_id: string; name: string };
 
+export const MCP_IMPORT_FAILED_MSG =
+  "Impossible de récupérer la liste de vos entreprises Pennylane. Reconnectez Pennylane (MCP), puis réessayez.";
+
 export async function mcpListCompanies(): Promise<McpCompany[]> {
+  try {
+    return await listCompaniesRaw();
+  } catch (e) {
+    const detail = e instanceof Error ? `${e.message} ${JSON.stringify((e as { data?: unknown }).data ?? null)}` : String(e);
+    await setStatus("connected", `Import des dossiers : ${detail}`.slice(0, 500));
+    throw new Error(e instanceof McpUnavailable ? e.message : MCP_IMPORT_FAILED_MSG);
+  }
+}
+
+async function listCompaniesRaw(): Promise<McpCompany[]> {
   const s = await openMcp();
   try {
     const ctx = await s.call<{ companies?: { id: number; name: string }[]; firms?: { id: number; name?: string }[] }>("get_context", {});
