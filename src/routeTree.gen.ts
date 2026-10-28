@@ -17,6 +17,7 @@ import { Route as AuthenticatedCabinetDossierIdRouteImport } from './routes/_aut
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
 import { Route as AuthenticatedEspaceSupplierRouteImport } from './routes/_authenticated/espace.$supplier'
 import { Route as AuthenticatedEspaceTermineRouteImport } from './routes/_authenticated/espace.termine'
+import { Route as ApiPublicJobsSyncPennylaneRouteImport } from './routes/api/public/jobs/sync-pennylane'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -62,6 +63,12 @@ const AuthenticatedEspaceTermineRoute =
     path: '/espace/termine',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const ApiPublicJobsSyncPennylaneRoute =
+  ApiPublicJobsSyncPennylaneRouteImport.update({
+    id: '/api/public/jobs/sync-pennylane',
+    path: '/api/public/jobs/sync-pennylane',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
+  '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -80,6 +88,7 @@ export interface FileRoutesByTo {
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/cabinet': typeof AuthenticatedCabinetIndexRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
+  '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -91,6 +100,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/termine': typeof AuthenticatedEspaceTermineRoute
   '/_authenticated/cabinet/': typeof AuthenticatedCabinetIndexRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
+  '/api/public/jobs/sync-pennylane': typeof ApiPublicJobsSyncPennylaneRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -102,6 +112,7 @@ export interface FileRouteTypes {
     | '/espace/termine'
     | '/cabinet/'
     | '/espace/'
+    | '/api/public/jobs/sync-pennylane'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +122,7 @@ export interface FileRouteTypes {
     | '/espace/termine'
     | '/cabinet'
     | '/espace'
+    | '/api/public/jobs/sync-pennylane'
   id:
     | '__root__'
     | '/'
@@ -121,11 +133,13 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/termine'
     | '/_authenticated/cabinet/'
     | '/_authenticated/espace/'
+    | '/api/public/jobs/sync-pennylane'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ApiPublicJobsSyncPennylaneRoute: typeof ApiPublicJobsSyncPennylaneRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -186,6 +200,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedEspaceTermineRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/jobs/sync-pennylane': {
+      id: '/api/public/jobs/sync-pennylane'
+      path: '/api/public/jobs/sync-pennylane'
+      fullPath: '/api/public/jobs/sync-pennylane'
+      preLoaderRoute: typeof ApiPublicJobsSyncPennylaneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -213,6 +234,7 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ApiPublicJobsSyncPennylaneRoute: ApiPublicJobsSyncPennylaneRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
