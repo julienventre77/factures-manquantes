@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ReviewPanel } from "@/components/ReviewPanel";
+import { QuestionsPanel } from "@/components/QuestionsPanel";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
 import { meQuery, groupBySupplier, formatDate, formatEUR, STATUS_LABEL, type Tx } from "@/lib/session";
@@ -120,6 +121,7 @@ function DossierPage() {
         <DossierSettings dossier={dossier} onSaved={reload} />
         <Members dossierId={dossierId} members={members} onSaved={reload} />
 
+        <QuestionsPanel dossierId={dossierId} />
         <ReviewPanel
           pending={txs.filter((t) => t.review_state === "pending")}
           dismissed={txs.filter((t) => t.review_state === "dismissed")}
