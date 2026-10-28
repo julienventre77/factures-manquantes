@@ -49,7 +49,7 @@ function Cabinet() {
     const { error } = await supabase.from("dossiers").insert({
       name: form.name, company_id: form.company_id, collect_email: form.collect_email || null,
     });
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     setForm({ name: "", company_id: "", collect_email: "" });
     toast.success("Dossier créé");
     qc.invalidateQueries({ queryKey: ["dossiers"] });

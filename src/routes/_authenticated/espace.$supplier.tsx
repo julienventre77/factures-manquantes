@@ -59,12 +59,12 @@ function SupplierPage() {
   async function uploadFiles(files: File[], targets: Tx[]) {
     if (!dossierId || files.length === 0 || targets.length === 0) return;
     const bad = files.find((f) => !ACCEPT.split(",").includes(f.type));
-    if (bad) return toast.error(`« ${bad.name} » n'est pas un PDF, JPG ou PNG.`);
+    if (bad) { toast.error(`« ${bad.name} » n'est pas un PDF, JPG ou PNG.`); return; }
     setBusy(true);
     try {
       for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        const tx = targets[Math.min(i, targets.length - 1)];
+        const f = files[i]!;
+        const tx = targets[Math.min(i, targets.length - 1)]!;
         const safe = f.name.replace(/[^\w.\-]+/g, "_");
         const path = `${dossierId}/${tx.id}/${Date.now()}-${safe}`;
         const up = await supabase.storage.from("factures").upload(path, f, { contentType: f.type });
@@ -239,7 +239,7 @@ function TxRow({ tx, busy, onFiles, onNoInvoice }: { tx: Tx; busy: boolean; onFi
   );
 }
 
-function DropZone({ busy, label, hint, onFiles }: { busy: boolean; label: string; hint?: string; onFiles: (f: File[]) => void }) {
+function DropZone({ busy, label, hint, onFiles }: { busy: boolean; label: string; hint?: string | undefined; onFiles: (f: File[]) => void }) {
   const input = useRef<HTMLInputElement>(null);
   const [over, setOver] = useState(false);
   return (
@@ -271,7 +271,7 @@ function NoInvoiceDialog({ tx, onClose, onDone }: { tx: Tx | null; onClose: () =
   async function confirm() {
     if (!tx) return;
     const { error } = await supabase.from("transactions").update({ status: "sans_facture", comment: comment || null }).eq("id", tx.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("C'est noté");
     onDone();
     close();

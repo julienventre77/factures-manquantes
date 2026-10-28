@@ -61,8 +61,8 @@ function DossierPage() {
   async function sync() {
     setSyncing(true);
     try {
-      const r = await syncDossierNow({ data: { dossierId } });
-      toast.success(r.message);
+      await syncDossierNow({ data: { dossierId } });
+      toast.success("Synchronisation terminée");
       reload();
     } catch (e) {
       toast.error((e as Error).message);
@@ -73,7 +73,7 @@ function DossierPage() {
 
   async function download(path: string) {
     const { data, error } = await supabase.storage.from("factures").createSignedUrl(path, 60);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     window.open(data.signedUrl, "_blank");
   }
 
@@ -86,7 +86,7 @@ function DossierPage() {
     );
     const { error } = await supabase.from("transactions").update({ supplier: name })
       .eq("dossier_id", dossierId).eq("supplier_detected", detected);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Regroupement mis à jour");
     reload();
   }
@@ -164,7 +164,7 @@ function DossierSettings({ dossier, onSaved }: { dossier: { id: string; name: st
   async function save(e: React.FormEvent) {
     e.preventDefault();
     const { error } = await supabase.from("dossiers").update({ ...f, collect_email: f.collect_email || null }).eq("id", dossier.id);
-    if (error) return toast.error(error.message);
+    if (error) { toast.error(error.message); return; }
     toast.success("Dossier enregistré");
     onSaved();
   }
