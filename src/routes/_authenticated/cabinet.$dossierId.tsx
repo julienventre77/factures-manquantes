@@ -14,13 +14,10 @@ import { ReviewPanel } from "@/components/ReviewPanel";
 import { QuestionsPanel } from "@/components/QuestionsPanel";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
-import { meQuery, groupBySupplier, formatDate, formatEUR, STATUS_LABEL, type Tx } from "@/lib/session";
+import { requireCabinet, meQuery, groupBySupplier, formatDate, formatEUR, STATUS_LABEL, type Tx } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated/cabinet/$dossierId")({
-  beforeLoad: async ({ context }) => {
-    const me = await context.queryClient.fetchQuery(meQuery);
-    if (!me?.isCabinet) throw redirect({ to: "/espace" });
-  },
+  beforeLoad: requireCabinet,
   head: () => ({
     meta: [
       { title: "Tableau de bord du dossier — PBC List" },
@@ -93,14 +90,14 @@ function DossierPage() {
     reload();
   }
 
-  if (!q.data) return <div className="min-h-screen"><AppHeader subtitle="Espace cabinet" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
+  if (!q.data) return <div className="min-h-screen"><AppHeader space="cabinet" /><p className="p-8 text-muted-foreground">Chargement…</p></div>;
   const { dossier, members, txs, uploads } = q.data;
   const sent = txs.filter((t) => (t.review_state ?? "sent") === "sent");
   const groups = groupBySupplier(sent);
 
   return (
     <div className="min-h-screen">
-      <AppHeader subtitle="Espace cabinet" />
+      <AppHeader space="cabinet" />
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <Link to="/cabinet" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="h-4 w-4" /> Tous les dossiers

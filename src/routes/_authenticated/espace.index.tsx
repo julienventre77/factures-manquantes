@@ -1,3 +1,4 @@
+import { requireClient } from "@/lib/session";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { HelpChat } from "@/components/HelpChat";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { meQuery, groupBySupplier, formatEUR, type Tx } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
+  beforeLoad: requireClient,
   head: () => ({
     meta: [
       { title: "Mes factures à transmettre — PBC List" },
@@ -59,7 +61,7 @@ function Espace() {
 
   return (
     <div className="min-h-screen pb-28">
-      <AppHeader /><HelpChat />
+      <AppHeader space="client" /><HelpChat />
       <main className="mx-auto max-w-2xl px-4 py-8">
         {me.data && !me.data.dossierId ? (
           <p className="text-muted-foreground">Votre compte n'est rattaché à aucun dossier. Contactez votre cabinet.</p>

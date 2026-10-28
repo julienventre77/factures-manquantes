@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as ConnexionRouteImport } from './routes/connexion'
 import { Route as AuthenticatedAccueilRouteImport } from './routes/_authenticated/accueil'
+import { Route as CabinetConnexionRouteImport } from './routes/cabinet.connexion'
 import { Route as AuthenticatedCabinetIndexRouteImport } from './routes/_authenticated/cabinet.index'
 import { Route as AuthenticatedCabinetDossierIdRouteImport } from './routes/_authenticated/cabinet.$dossierId'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
@@ -29,10 +31,20 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConnexionRoute = ConnexionRouteImport.update({
+  id: '/connexion',
+  path: '/connexion',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAccueilRoute = AuthenticatedAccueilRouteImport.update({
   id: '/accueil',
   path: '/accueil',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const CabinetConnexionRoute = CabinetConnexionRouteImport.update({
+  id: '/cabinet/connexion',
+  path: '/cabinet/connexion',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedCabinetIndexRoute =
   AuthenticatedCabinetIndexRouteImport.update({
@@ -79,7 +91,9 @@ const ApiPublicPennylaneMcpCallbackRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/connexion': typeof ConnexionRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/cabinet/connexion': typeof CabinetConnexionRoute
   '/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
@@ -90,7 +104,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/connexion': typeof ConnexionRoute
   '/accueil': typeof AuthenticatedAccueilRoute
+  '/cabinet/connexion': typeof CabinetConnexionRoute
   '/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/espace/termine': typeof AuthenticatedEspaceTermineRoute
@@ -103,7 +119,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/connexion': typeof ConnexionRoute
   '/_authenticated/accueil': typeof AuthenticatedAccueilRoute
+  '/cabinet/connexion': typeof CabinetConnexionRoute
   '/_authenticated/cabinet/$dossierId': typeof AuthenticatedCabinetDossierIdRoute
   '/_authenticated/espace/$supplier': typeof AuthenticatedEspaceSupplierRoute
   '/_authenticated/espace/termine': typeof AuthenticatedEspaceTermineRoute
@@ -116,7 +134,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/connexion'
     | '/accueil'
+    | '/cabinet/connexion'
     | '/cabinet/$dossierId'
     | '/espace/$supplier'
     | '/espace/termine'
@@ -127,7 +147,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/connexion'
     | '/accueil'
+    | '/cabinet/connexion'
     | '/cabinet/$dossierId'
     | '/espace/$supplier'
     | '/espace/termine'
@@ -139,7 +161,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/connexion'
     | '/_authenticated/accueil'
+    | '/cabinet/connexion'
     | '/_authenticated/cabinet/$dossierId'
     | '/_authenticated/espace/$supplier'
     | '/_authenticated/espace/termine'
@@ -152,6 +176,8 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  ConnexionRoute: typeof ConnexionRoute
+  CabinetConnexionRoute: typeof CabinetConnexionRoute
   ApiPublicJobsSyncPennylaneRoute: typeof ApiPublicJobsSyncPennylaneRoute
   ApiPublicPennylaneMcpCallbackRoute: typeof ApiPublicPennylaneMcpCallbackRoute
 }
@@ -172,12 +198,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/connexion': {
+      id: '/connexion'
+      path: '/connexion'
+      fullPath: '/connexion'
+      preLoaderRoute: typeof ConnexionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/accueil': {
       id: '/_authenticated/accueil'
       path: '/accueil'
       fullPath: '/accueil'
       preLoaderRoute: typeof AuthenticatedAccueilRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/cabinet/connexion': {
+      id: '/cabinet/connexion'
+      path: '/cabinet/connexion'
+      fullPath: '/cabinet/connexion'
+      preLoaderRoute: typeof CabinetConnexionRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/cabinet/': {
       id: '/_authenticated/cabinet/'
@@ -255,6 +295,8 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  ConnexionRoute: ConnexionRoute,
+  CabinetConnexionRoute: CabinetConnexionRoute,
   ApiPublicJobsSyncPennylaneRoute: ApiPublicJobsSyncPennylaneRoute,
   ApiPublicPennylaneMcpCallbackRoute: ApiPublicPennylaneMcpCallbackRoute,
 }
