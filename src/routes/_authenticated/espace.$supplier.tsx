@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { groupBySupplier, formatDate, formatEUR, type SupplierGroup, type Tx } from "@/lib/session";
-import { prioritize } from "@/lib/priority";
+import { stepOrder } from "@/lib/priority";
 import { cn } from "@/lib/utils";
 import { useClientDossier, useClientTxs } from "./espace.index";
 
@@ -46,7 +46,8 @@ export const Route = createFileRoute("/_authenticated/espace/$supplier")({
 function SupplierPage() {
   const { supplier } = Route.useParams();
   const { txs, dossierId } = useClientTxs();
-  const steps = prioritize(groupBySupplier(txs.data ?? []));
+  // Stable order, so "Étape X sur N", Précédent and Suivant do not move after each answer.
+  const steps = stepOrder(groupBySupplier(txs.data ?? []));
   const idx = steps.findIndex((g) => g.key === supplier);
 
   if (txs.isLoading)
