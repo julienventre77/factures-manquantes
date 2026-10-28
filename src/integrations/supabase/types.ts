@@ -109,6 +109,7 @@ export type Database = {
         Row: {
           amount: number
           comment: string | null
+          counterpart_accounts: string | null
           created_at: string
           date: string
           dossier_id: string
@@ -125,6 +126,7 @@ export type Database = {
         Insert: {
           amount: number
           comment?: string | null
+          counterpart_accounts?: string | null
           created_at?: string
           date: string
           dossier_id: string
@@ -141,6 +143,7 @@ export type Database = {
         Update: {
           amount?: number
           comment?: string | null
+          counterpart_accounts?: string | null
           created_at?: string
           date?: string
           dossier_id?: string

@@ -1,0 +1,1 @@
+alter table public.transactions add column counterpart_accounts text;
