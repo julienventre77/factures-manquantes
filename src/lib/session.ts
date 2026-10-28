@@ -45,6 +45,7 @@ export type Tx = {
   comment: string | null;
   review_state?: string;
   counterpart_accounts?: string | null;
+  skip_rule_id?: string | null;
   direction: "out" | "in";
 };
 

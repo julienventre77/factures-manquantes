@@ -1,10 +1,11 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import type { ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, LogOut, Mail, Phone } from "lucide-react";
+import { FolderOpen, LogOut, Mail, Phone, Settings } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { BrandMark, Monogram } from "@/components/brand";
-import { CABINET } from "@/lib/cabinet";
+import { useCabinet } from "@/lib/cabinet";
 import { meQuery } from "@/lib/session";
 import { cn } from "@/lib/utils";
 
@@ -22,13 +23,14 @@ export function AppHeader({ space }: { space: "client" | "cabinet" }) {
 
 // Client side (design B, warm): the firm's identity comes first (design C).
 function ClientBar({ onSignOut }: { onSignOut: () => void }) {
+  const cabinet = useCabinet();
   return (
     <header className="border-b bg-card">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex min-w-0 items-center gap-3">
-          <Monogram name={CABINET.name} />
+          <Monogram name={cabinet.name} logoUrl={cabinet.logoUrl} />
           <div className="min-w-0">
-            <div className="truncate font-bold leading-tight text-primary">{CABINET.name}</div>
+            <div className="truncate font-bold leading-tight text-primary">{cabinet.name}</div>
             <div className="text-sm text-muted-foreground">Espace client</div>
           </div>
         </div>
@@ -45,17 +47,18 @@ function ClientBar({ onSignOut }: { onSignOut: () => void }) {
 
 // Phone and e-mail of the firm, hidden while they are not filled in.
 export function CabinetContact({ className }: { className?: string | undefined }) {
-  if (!CABINET.email && !CABINET.phone) return null;
+  const cabinet = useCabinet();
+  if (!cabinet.email && !cabinet.phone) return null;
   return (
     <div className={cn("flex flex-wrap items-center gap-x-4 gap-y-1 text-sm font-medium text-primary", className)}>
-      {CABINET.phone && (
-        <a href={`tel:${CABINET.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 hover:underline">
-          <Phone className="h-4 w-4" /> {CABINET.phone}
+      {cabinet.phone && (
+        <a href={`tel:${cabinet.phone.replace(/\s/g, "")}`} className="inline-flex items-center gap-1.5 hover:underline">
+          <Phone className="h-4 w-4" /> {cabinet.phone}
         </a>
       )}
-      {CABINET.email && (
-        <a href={`mailto:${CABINET.email}`} className="inline-flex items-center gap-1.5 hover:underline">
-          <Mail className="h-4 w-4" /> {CABINET.email}
+      {cabinet.email && (
+        <a href={`mailto:${cabinet.email}`} className="inline-flex items-center gap-1.5 hover:underline">
+          <Mail className="h-4 w-4" /> {cabinet.email}
         </a>
       )}
     </div>
@@ -66,6 +69,7 @@ export function CabinetContact({ className }: { className?: string | undefined }
 function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
   const me = useQuery(meQuery);
   const email = me.data?.email ?? "";
+  const onSettings = useRouterState({ select: (st) => st.location.pathname.startsWith("/cabinet/parametres") });
   return (
     <header className="bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4">
@@ -76,12 +80,8 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
           </span>
         </Link>
         <nav className="hidden self-stretch sm:flex">
-          <Link
-            to="/cabinet"
-            className="flex items-center gap-2 border-b-[3px] border-transparent px-3 text-sm font-semibold text-primary-foreground/80 hover:text-primary-foreground data-[status=active]:border-mint data-[status=active]:text-primary-foreground"
-          >
-            <FolderOpen className="h-4 w-4" /> Dossiers clients
-          </Link>
+          <NavTab to="/cabinet" active={!onSettings}><FolderOpen className="h-4 w-4" /> Dossiers clients</NavTab>
+          <NavTab to="/cabinet/parametres" active={onSettings}><Settings className="h-4 w-4" /> Paramètres</NavTab>
         </nav>
         <div className="ml-auto flex items-center gap-3 py-2">
           {email && (
@@ -95,6 +95,9 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
               </span>
             </div>
           )}
+          <Link to="/cabinet/parametres" aria-label="Paramètres du cabinet" className="rounded-md p-2 hover:bg-primary-foreground/10 sm:hidden">
+            <Settings className="h-5 w-5" />
+          </Link>
           <Button
             variant="outline"
             onClick={onSignOut}
@@ -106,5 +109,20 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
         </div>
       </div>
     </header>
+  );
+}
+
+function NavTab({ to, active, children }: { to: "/cabinet" | "/cabinet/parametres"; active: boolean; children: ReactNode }) {
+  return (
+    <Link
+      to={to}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "flex items-center gap-2 border-b-[3px] px-3 text-sm font-semibold hover:text-primary-foreground",
+        active ? "border-mint text-primary-foreground" : "border-transparent text-primary-foreground/80",
+      )}
+    >
+      {children}
+    </Link>
   );
 }

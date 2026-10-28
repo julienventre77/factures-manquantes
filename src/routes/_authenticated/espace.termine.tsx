@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { HelpChat } from "@/components/HelpChat";
 import { CheckCircle2 } from "lucide-react";
 import { AppHeader, CabinetContact } from "@/components/AppHeader";
-import { CABINET } from "@/lib/cabinet";
+import { useCabinet } from "@/lib/cabinet";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/espace/termine")({
@@ -37,12 +37,18 @@ export const Route = createFileRoute("/_authenticated/espace/termine")({
             </Button>
           </div>
         </section>
-        {(CABINET.email || CABINET.phone) && (
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            Une question ? {CABINET.name} vous répond : <CabinetContact />
-          </div>
-        )}
+        <AskCabinet />
       </main>
     </div>
   ),
 });
+
+function AskCabinet() {
+  const cabinet = useCabinet();
+  if (!cabinet.email && !cabinet.phone) return null;
+  return (
+    <div className="mt-8 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+      Une question ? {cabinet.name} vous répond : <CabinetContact />
+    </div>
+  );
+}

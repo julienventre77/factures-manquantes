@@ -2,8 +2,16 @@ import { ListChecks } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { initials } from "@/lib/supplier";
 
-// Firm monogram (design option C) until the firm can upload its own logo.
-export function Monogram({ name, className }: { name: string; className?: string | undefined }) {
+// Firm logo (design option C), or its monogram while no logo is uploaded.
+export function Monogram({ name, logoUrl, className }: { name: string; logoUrl?: string | null | undefined; className?: string | undefined }) {
+  if (logoUrl)
+    return (
+      <img
+        src={logoUrl}
+        alt={`Logo ${name}`}
+        className={cn("h-11 w-11 shrink-0 rounded-lg border bg-card object-contain p-0.5", className)}
+      />
+    );
   return (
     <span
       aria-hidden
