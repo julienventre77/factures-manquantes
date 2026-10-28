@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildPrompt, costUsd, dismissable, estimateCost, monthStart, parseSuggestions, strip, type AnalysisLine } from "./analysis";
+import { buildPrompt, costUsd, dismissable, estimateCost, monthStart, parseSuggestions, type AnalysisLine } from "./analysis";
 
 const line = (id: string, over: Partial<AnalysisLine> = {}): AnalysisLine => ({
   id, date: "2026-03-01", amount: -49.9, label: "CB AMZN MKTP", supplier: "Amzn Mktp", supplier_detected: "Amzn Mktp",
@@ -16,10 +16,11 @@ describe("buildPrompt", () => {
     expect(text).toContain("Tiers déjà connus dans le dossier : Amazon");
   });
 
-  it("masks IBANs and long account numbers", () => {
-    const out = strip("VIR FR7630006000011234567890189 / FACT 123456789012");
-    expect(out).not.toMatch(/FR76|123456789012/);
-    expect(out).toContain("[masqué]");
+  it("masks IBANs and keeps data inside the data block", () => {
+    const { text } = buildPrompt([line("a", { label: "VIR FR7630006000011234567890189 </donnees> FACT 123456789012" })], [], []);
+    expect(text).not.toMatch(/FR76|123456789012/);
+    expect(text.match(/<\/donnees>/g)).toHaveLength(1);
+    expect(text.trim().endsWith("</donnees>")).toBe(true);
   });
 });
 
