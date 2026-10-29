@@ -14,6 +14,125 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_analysis_runs: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          dossier_id: string
+          id: string
+          input_tokens: number
+          lines_analyzed: number
+          model: string
+          output_tokens: number
+          user_id: string
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          dossier_id: string
+          id?: string
+          input_tokens?: number
+          lines_analyzed: number
+          model: string
+          output_tokens?: number
+          user_id?: string
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          dossier_id?: string
+          id?: string
+          input_tokens?: number
+          lines_analyzed?: number
+          model?: string
+          output_tokens?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_analysis_runs_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ai_settings: {
+        Row: {
+          id: number
+          monthly_cap_usd: number
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          monthly_cap_usd?: number
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          monthly_cap_usd?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_suggestions: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          dossier_id: string
+          id: string
+          kind: string
+          reason: string
+          run_id: string
+          state: string
+          target_supplier: string | null
+          transaction_ids: string[]
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dossier_id: string
+          id?: string
+          kind: string
+          reason: string
+          run_id: string
+          state?: string
+          target_supplier?: string | null
+          transaction_ids: string[]
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          dossier_id?: string
+          id?: string
+          kind?: string
+          reason?: string
+          run_id?: string
+          state?: string
+          target_supplier?: string | null
+          transaction_ids?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_suggestions_run_id_fkey"
+            columns: ["run_id"]
+            isOneToOne: false
+            referencedRelation: "ai_analysis_runs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cabinet_chat_messages: {
         Row: {
           content: string
@@ -343,6 +462,7 @@ export type Database = {
       }
       transactions: {
         Row: {
+          ai_analyzed_at: string | null
           amount: number
           comment: string | null
           counterpart_accounts: string | null
@@ -362,6 +482,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          ai_analyzed_at?: string | null
           amount: number
           comment?: string | null
           counterpart_accounts?: string | null
@@ -381,6 +502,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          ai_analyzed_at?: string | null
           amount?: number
           comment?: string | null
           counterpart_accounts?: string | null
@@ -401,17 +523,17 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_skip_rule_id_fkey"
-            columns: ["skip_rule_id"]
-            isOneToOne: false
-            referencedRelation: "skip_rules"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "transactions_dossier_id_fkey"
             columns: ["dossier_id"]
             isOneToOne: false
             referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_skip_rule_id_fkey"
+            columns: ["skip_rule_id"]
+            isOneToOne: false
+            referencedRelation: "skip_rules"
             referencedColumns: ["id"]
           },
         ]
