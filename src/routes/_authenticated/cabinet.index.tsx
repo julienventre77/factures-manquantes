@@ -215,7 +215,7 @@ function Cabinet() {
 
         <div id="nouveau-dossier" className="scroll-mt-6 rounded-xl border bg-card p-5 shadow-sm">
           <h2 className="flex items-center gap-2 text-lg"><Plus className="h-5 w-5" /> Nouveau dossier</h2>
-          <form onSubmit={create} className="mt-4 grid gap-4 sm:grid-cols-[1fr_12rem_1.5fr_auto] sm:items-end">
+          <form onSubmit={create} className="mt-4 grid gap-4 sm:grid-cols-2 sm:items-end lg:grid-cols-[1fr_12rem_1.5fr_auto]">
             <div className="space-y-1"><Label htmlFor="nd-name">Nom</Label>
               <Input id="nd-name" required placeholder="Ex. : SAS Exemple" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
             <div className="space-y-1"><Label htmlFor="nd-company">company_id Pennylane</Label>

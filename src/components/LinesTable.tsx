@@ -134,12 +134,12 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
           </span>
           {selPending.length > 0 && (
             <>
-              <Button size="sm" disabled={busy} className="bg-mint text-primary hover:bg-mint-soft"
+              <Button size="sm" disabled={busy} className="bg-mint text-primary hover:bg-mint-soft focus-visible:ring-mint focus-visible:ring-offset-primary"
                 onClick={() => setState(selPending.map((t) => t.id), "sent", `${plural(selPending.length, "ligne")} envoyée${selPending.length > 1 ? "s" : ""} au client`)}>
                 <Send /> Envoyer au client ({selPending.length})
               </Button>
               <Button size="sm" variant="outline" disabled={busy}
-                className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:ring-mint focus-visible:ring-offset-primary"
                 onClick={() => setState(selPending.map((t) => t.id), "dismissed", `${plural(selPending.length, "ligne")} non demandée${selPending.length > 1 ? "s" : ""}`)}>
                 <Ban /> Ne pas demander ({selPending.length})
               </Button>
@@ -147,12 +147,12 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
           )}
           {selDismissed.length > 0 && (
             <Button size="sm" variant="outline" disabled={busy}
-              className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+              className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:ring-mint focus-visible:ring-offset-primary"
               onClick={() => setState(selDismissed.map((t) => t.id), "pending", `${plural(selDismissed.length, "ligne")} réactivée${selDismissed.length > 1 ? "s" : ""}`)}>
               <RotateCcw /> Réactiver ({selDismissed.length})
             </Button>
           )}
-          <button type="button" className="ml-auto text-sm underline underline-offset-4" onClick={() => setSel(new Set())}>
+          <button type="button" className="ml-auto rounded-sm text-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint" onClick={() => setSel(new Set())}>
             Annuler la sélection
           </button>
         </div>
@@ -203,7 +203,7 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
                     {t.comment && <div className="mt-1 text-xs italic text-muted-foreground">« {t.comment} »</div>}
                     {files.map((u) => (
                       <button key={u.id} type="button" onClick={() => onDownload(u.storage_path)}
-                        className="mt-1 flex max-w-full items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                        className="mt-1 flex min-h-6 max-w-full items-center gap-1 py-1 text-xs font-semibold text-primary hover:underline">
                         <Download className="h-3 w-3 shrink-0" /> <span className="truncate">{u.file_name}</span>
                       </button>
                     ))}

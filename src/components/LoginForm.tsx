@@ -114,7 +114,6 @@ export function LoginForm({ space }: { space: Space }) {
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-            aria-pressed={showPassword}
             className="absolute inset-y-0 right-0 flex w-12 items-center justify-center rounded-r-md text-muted-foreground hover:text-primary"
           >
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}

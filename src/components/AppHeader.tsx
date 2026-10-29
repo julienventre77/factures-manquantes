@@ -69,7 +69,7 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
   return (
     <header className="bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4">
-        <Link to="/cabinet" className="flex items-center gap-2.5 py-3">
+        <Link to="/cabinet" className="flex items-center gap-2.5 rounded-sm py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint">
           <BrandMark tone="mint" />
           <span className="font-bold">
             PBC List <span className="hidden font-normal text-primary-foreground/80 sm:inline">· Espace cabinet</span>
@@ -78,7 +78,7 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
         <nav className="hidden self-stretch sm:flex">
           <Link
             to="/cabinet"
-            className="flex items-center gap-2 border-b-[3px] border-transparent px-3 text-sm font-semibold text-primary-foreground/80 hover:text-primary-foreground data-[status=active]:border-mint data-[status=active]:text-primary-foreground"
+            className="flex items-center gap-2 border-b-[3px] border-transparent px-3 text-sm font-semibold text-primary-foreground/80 hover:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint data-[status=active]:border-mint data-[status=active]:text-primary-foreground"
           >
             <FolderOpen className="h-4 w-4" /> Dossiers clients
           </Link>
@@ -99,7 +99,7 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
             variant="outline"
             onClick={onSignOut}
             aria-label="Se déconnecter"
-            className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:ring-mint focus-visible:ring-offset-primary"
           >
             <LogOut /> <span className="hidden sm:inline">Se déconnecter</span>
           </Button>

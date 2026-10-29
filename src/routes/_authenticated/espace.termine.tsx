@@ -32,7 +32,7 @@ export const Route = createFileRoute("/_authenticated/espace/termine")({
             <p className="mx-auto mt-3 max-w-md text-primary-foreground/85">
               Vos réponses ont bien été transmises à votre cabinet. Votre comptable reviendra vers vous si besoin.
             </p>
-            <Button asChild size="xl" className="mt-8 bg-mint text-primary hover:bg-mint-soft">
+            <Button asChild size="xl" className="mt-8 bg-mint text-primary hover:bg-mint-soft focus-visible:ring-mint focus-visible:ring-offset-primary">
               <Link to="/espace">Revenir à la liste</Link>
             </Button>
           </div>
