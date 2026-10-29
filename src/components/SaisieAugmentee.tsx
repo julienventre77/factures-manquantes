@@ -259,18 +259,19 @@ function Checks({ facture, paiement }: { facture: Facture; paiement: number }) {
   );
 }
 
+// The full purchase entry, always visible: expense lines, deductible VAT (44562 / 44566) and supplier debt (401).
 function EntryPreview({ facture }: { facture: Facture }) {
   const e = ecriture(facture);
   return (
-    <details className="rounded-xl border p-3 text-sm">
-      <summary className="cursor-pointer font-semibold">Aperçu de l'écriture d'achat {e.equilibree ? "(équilibrée)" : "(déséquilibrée)"}</summary>
+    <section className="rounded-xl border p-3 text-sm" aria-label="Écriture d'achat">
+      <h3 className="font-semibold">Écriture d'achat {e.equilibree ? "(équilibrée)" : "(déséquilibrée)"}</h3>
       <table className="mt-2 w-full">
         <thead className="text-left text-muted-foreground">
           <tr><th scope="col" className="py-1">Compte</th><th scope="col" className="py-1">Libellé</th><th scope="col" className="py-1 text-right">Débit</th><th scope="col" className="py-1 text-right">Crédit</th></tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y">
           {e.lignes.map((l, i) => (
-            <tr key={i}>
+            <tr key={i} className={l.credit ? "font-semibold" : undefined}>
               <td className="py-1 font-mono">{l.compte}</td>
               <td className="py-1">{l.libelle}</td>
               <td className="py-1 text-right tabular-nums">{l.debit ? formatEUR(l.debit) : ""}</td>
@@ -278,7 +279,14 @@ function EntryPreview({ facture }: { facture: Facture }) {
             </tr>
           ))}
         </tbody>
+        <tfoot className="border-t font-bold">
+          <tr>
+            <td className="py-1" colSpan={2}>Totaux</td>
+            <td className="py-1 text-right tabular-nums">{formatEUR(e.totalDebit)}</td>
+            <td className="py-1 text-right tabular-nums">{formatEUR(e.totalCredit)}</td>
+          </tr>
+        </tfoot>
       </table>
-    </details>
+    </section>
   );
 }
