@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, BookmarkCheck, Check, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, BookmarkCheck, Check, Plus, Send, Sparkles, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -10,7 +10,7 @@ import { Pill } from "@/components/StatusPill";
 import { formatUsd } from "@/lib/analysis";
 import { compteAchatValide, libellePcg } from "@/lib/pcg";
 import { STATE_LABEL, ecartPaiement } from "@/lib/saisie";
-import { getSaisie, lireFacture, rejeterSaisie, validerSaisie } from "@/lib/saisie.functions";
+import { envoyerPennylane, getSaisie, lireFacture, rejeterSaisie, validerSaisie } from "@/lib/saisie.functions";
 import { formatDate, formatEUR } from "@/lib/session";
 import { alertes, controle, ecriture, round2, tvaLigne, type Facture, type Ligne } from "@/lib/ventilation";
 
@@ -26,7 +26,7 @@ export function SaisieAugmentee({ uploadId, onClose }: { uploadId: string | null
       <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Saisie augmentée</DialogTitle>
-          <DialogDescription>Claude lit la facture et propose un compte par nature. Vous validez. Rien n'est écrit dans Pennylane.</DialogDescription>
+          <DialogDescription>Claude lit la facture et propose un compte par nature. Vous validez. Sur un dossier démo, vous pouvez ensuite envoyer la facture et son PDF dans Pennylane.</DialogDescription>
         </DialogHeader>
         {uploadId && <Content key={uploadId} uploadId={uploadId} />}
       </DialogContent>
@@ -67,7 +67,7 @@ function Content({ uploadId }: { uploadId: string }) {
       {s?.state === "proposee" ? (
         <Editor saisie={s} paiement={d.paiement.montant} onDone={() => q.refetch()} />
       ) : s?.state === "validee" ? (
-        <Validated saisie={s} paiement={d.paiement.montant} />
+        <Validated saisie={s} paiement={d.paiement.montant} envoiPossible={d.envoiPossible} onDone={() => q.refetch()} />
       ) : (
         <div className="space-y-3 rounded-xl border bg-muted/40 p-4 text-sm">
           {s?.state === "echec" && <p className="text-destructive">La dernière lecture n'a pas abouti : vous pouvez réessayer.</p>}
@@ -125,7 +125,7 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
     setBusy(true);
     try {
       const r = await validerSaisie({ data: { id: saisie.id, libelleEcriture: libelle, lignes, forcer } });
-      toast.success(`Saisie validée${r.regles ? `, ${r.regles} compte(s) mémorisé(s) pour ce fournisseur` : ""}. Rien n'a été écrit dans Pennylane.`);
+      toast.success(`Saisie validée${r.regles ? `, ${r.regles} compte(s) mémorisé(s) pour ce fournisseur` : ""}. Rien n'est encore envoyé dans Pennylane.`);
       onDone();
     } catch (e) {
       toast.error((e as Error).message);
@@ -217,23 +217,59 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
         )}
         <Button onClick={valider} disabled={busy || (!c.ok && !forcer) || !lignes.every((l) => compteAchatValide(l.compte))}><Check /> Valider la saisie</Button>
         <Button variant="outline" onClick={rejeter} disabled={busy}><X /> Rejeter</Button>
-        <span className="text-xs text-muted-foreground">Lecture : {formatUsd(saisie.cost)}. L'écriture dans Pennylane viendra dans une étape suivante.</span>
+        <span className="text-xs text-muted-foreground">Lecture : {formatUsd(saisie.cost)}. L'envoi dans Pennylane se fait après validation.</span>
       </div>
     </div>
   );
 }
 
-function Validated({ saisie, paiement }: { saisie: Saisie; paiement: number }) {
+function Validated({ saisie, paiement, envoiPossible, onDone }: { saisie: Saisie; paiement: number; envoiPossible: boolean; onDone: () => void }) {
   const f = asFacture(saisie, saisie.lignes, saisie.libelleEcriture);
+  const [confirmer, setConfirmer] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // Writes to Pennylane: a second click confirms the sending.
+  async function envoyer() {
+    setBusy(true);
+    try {
+      const r = await envoyerPennylane({ data: { id: saisie.id } });
+      toast.success(`Facture importée dans Pennylane avec son PDF (n° ${r.invoiceId}).`);
+      onDone();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+      setConfirmer(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Header saisie={saisie} />
       <p className="text-sm"><span className="font-semibold">Libellé d'écriture :</span> {saisie.libelleEcriture}</p>
       <Checks facture={f} paiement={paiement} />
       <EntryPreview facture={f} />
-      <p className="text-xs text-muted-foreground">
-        Validée{saisie.decidedAt ? ` le ${formatDate(saisie.decidedAt.slice(0, 10))}` : ""}. Elle n'a pas été écrite dans Pennylane.
-      </p>
+      {saisie.pennylaneInvoiceId ? (
+        <p className="text-sm font-semibold text-primary">
+          Importée dans Pennylane avec son PDF (facture fournisseur n° {saisie.pennylaneInvoiceId}){saisie.envoyeLe ? ` le ${formatDate(saisie.envoyeLe.slice(0, 10))}` : ""}.
+        </p>
+      ) : envoiPossible ? (
+        <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+          {confirmer ? (
+            <>
+              <span className="text-sm">La facture, ses lignes et son PDF vont être créés dans le dossier Pennylane. Confirmez-vous ?</span>
+              <Button onClick={envoyer} disabled={busy}><Send /> {busy ? "Envoi en cours…" : "Confirmer l'envoi"}</Button>
+              <Button variant="outline" onClick={() => setConfirmer(false)} disabled={busy}>Annuler</Button>
+            </>
+          ) : (
+            <Button onClick={() => setConfirmer(true)}><Send /> Envoyer dans Pennylane</Button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Validée{saisie.decidedAt ? ` le ${formatDate(saisie.decidedAt.slice(0, 10))}` : ""}. L'envoi dans Pennylane n'est proposé que pour une facture PDF d'un dossier démo du hackathon.
+        </p>
+      )}
     </div>
   );
 }

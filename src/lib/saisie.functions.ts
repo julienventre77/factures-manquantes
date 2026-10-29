@@ -7,13 +7,15 @@ import {
   parseLecture, proposer, reglesAEnregistrer, typeMedia, type RegleFournisseur, type SaisieState,
 } from "@/lib/saisie";
 import { controle, type Facture, type Ligne } from "@/lib/ventilation";
+import { isDemoCompany } from "@/lib/demo-dossiers";
 
 // Saisie augmentée (lot C): Claude reads an invoice uploaded by the client, the firm validates the split.
-// Nothing is written to Pennylane: a validated entry stays in the app and feeds the supplier memory.
+// A validated entry feeds the supplier memory; on a hackathon demo dossier the firm can then send it to
+// Pennylane as a supplier invoice with its PDF (envoyerPennylane, one click per invoice).
 
 const UNAVAILABLE = "Saisie augmentée indisponible : la base de données n'est pas encore à jour.";
 const SAISIE_COLUMNS =
-  "id, upload_id, transaction_id, tiers, fournisseur, numero, date_facture, total_ht, total_tva, total_ttc, libelle_ecriture, lignes, state, cost_usd, lu_le, decided_at";
+  "id, upload_id, transaction_id, tiers, fournisseur, numero, date_facture, total_ht, total_tva, total_ttc, libelle_ecriture, lignes, state, cost_usd, lu_le, decided_at, pennylane_invoice_id, envoye_le";
 
 async function requireCabinetRole(db: any, userId: string) {
   const { data } = await db.from("user_roles").select("role").eq("user_id", userId);
@@ -44,6 +46,7 @@ export type SaisieView = {
   id: string; state: SaisieState; fournisseur: string; numero: string; date: string | null;
   totalHt: number; totalTva: number; totalTtc: number; libelleEcriture: string; lignes: Ligne[];
   cost: number; luLe: string; decidedAt: string | null;
+  pennylaneInvoiceId: string | null; envoyeLe: string | null;
 };
 
 const toView = (s: any): SaisieView | null => s && {
@@ -60,6 +63,8 @@ const toView = (s: any): SaisieView | null => s && {
   cost: Number(s.cost_usd),
   luLe: s.lu_le as string,
   decidedAt: (s.decided_at ?? null) as string | null,
+  pennylaneInvoiceId: (s.pennylane_invoice_id ?? null) as string | null,
+  envoyeLe: (s.envoye_le ?? null) as string | null,
 };
 
 const UploadInput = z.object({ uploadId: z.string().uuid() });
@@ -73,7 +78,10 @@ export const getSaisie = createServerFn({ method: "POST" })
     const { upload, tx } = await loadUpload(db, data.uploadId);
     const { data: s, error } = await db.from("saisies").select(SAISIE_COLUMNS).eq("upload_id", data.uploadId).maybeSingle();
     if (error) throw new Error(UNAVAILABLE);
+    const { data: d } = await db.from("dossiers").select("company_id").eq("id", upload.dossier_id).maybeSingle();
     return {
+      // Sending to Pennylane is offered on hackathon demo dossiers only, and only for a PDF.
+      envoiPossible: isDemoCompany(String(d?.company_id ?? "")) && typeMedia(upload.file_name) === "application/pdf",
       fileName: upload.file_name as string,
       lisible: typeMedia(upload.file_name) !== null,
       paiement: { date: tx.date as string, montant: Number(tx.amount), tiers: tx.supplier as string, achat: tx.direction === "out" },
@@ -207,4 +215,33 @@ export const rejeterSaisie = createServerFn({ method: "POST" })
       .eq("id", data.id).eq("state", "proposee");
     if (error) throw new Error("Rejet impossible.");
     return { ok: true };
+  });
+
+export const envoyerPennylane = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const db = context.supabase as any;
+    await requireCabinetRole(db, context.userId);
+    const { data: s, error } = await db.from("saisies").select(SAISIE_COLUMNS + ", dossier_id").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(UNAVAILABLE);
+    if (!s) throw new Error("Saisie introuvable.");
+    if (s.state !== "validee") throw new Error("Validez d'abord la saisie.");
+    if (s.pennylane_invoice_id) throw new Error("Cette facture est déjà dans Pennylane.");
+    const { upload } = await loadUpload(db, s.upload_id);
+    if (typeMedia(upload.file_name) !== "application/pdf") throw new Error("Pennylane n'importe que les factures en PDF.");
+    const { data: d } = await db.from("dossiers").select("company_id").eq("id", s.dossier_id).maybeSingle();
+    const { data: blob, error: e1 } = await db.storage.from("factures").download(upload.storage_path);
+    if (e1 || !blob) throw new Error("Pièce illisible dans le stockage.");
+
+    const v = toView(s)!;
+    const { envoyerFacture } = await import("@/lib/pennylane-import.server");
+    const { invoiceId } = await envoyerFacture({
+      companyId: String(d?.company_id ?? ""),
+      facture: { id: v.id, numero: v.numero, fournisseur: v.fournisseur, date: v.date ?? "", totalHt: v.totalHt, totalTva: v.totalTva, totalTtc: v.totalTtc, libelleGenerique: "", libelleEcriture: v.libelleEcriture, lignes: v.lignes },
+      pdf: blob, fileName: upload.file_name, reference: `pbc-${v.id}`,
+    });
+    const { error: e2 } = await db.from("saisies").update({ pennylane_invoice_id: invoiceId, envoye_par: context.userId, envoye_le: new Date().toISOString() }).eq("id", s.id);
+    if (e2) throw new Error(`Facture importée dans Pennylane (n° ${invoiceId}), mais l'appli n'a pas pu le noter.`);
+    return { invoiceId };
   });
