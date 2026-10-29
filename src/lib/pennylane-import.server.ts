@@ -10,6 +10,7 @@ import { blocagesEnvoi, choisirPlanItem, clePlanItem, codeTva, corpsMiseAJour, t
 import type { Facture } from "./ventilation";
 
 export const ENVOI_DEMO_ONLY_MSG = "L'envoi vers Pennylane est réservé aux dossiers démo du hackathon.";
+const PAS_DE_DROIT_MSG = "La connexion Pennylane (MCP) de PBC List n'a pas encore le droit d'utiliser les opérations : reconnectez Pennylane depuis l'écran de connexion, puis réessayez.";
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type Facture_PL = { id: number; is_waiting_for_ocr: boolean; invoice_lines: { id: number }[] };
@@ -36,10 +37,14 @@ export async function envoyerFacture(opts: {
     const numeros = [...new Set(f.lignes.map((l) => l.compte))];
     const items: PlanItem[] = [];
     for (let page = 1; page <= 10; page++) {
+      // First call to the operations: a connection without the operations scope fails here, before any write.
       const r = await run<{ plan_items: PlanItem[]; pagination?: { hasNextPage?: boolean } }>(
         "getListCompanyPlanItems", "Looking up the company's expense accounts used by a supplier invoice before importing it.",
         { query_params: { page, per_page: 100, filter: JSON.stringify([{ field: "number", operator: "in", value: numeros }]) } },
-      );
+      ).catch((e: Error) => {
+        console.error("pennylane-import operations", e.message);
+        throw new Error(PAS_DE_DROIT_MSG);
+      });
       items.push(...(r.plan_items ?? []));
       if (!r.pagination?.hasNextPage) break;
     }

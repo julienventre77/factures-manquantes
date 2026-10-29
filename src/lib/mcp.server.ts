@@ -16,6 +16,26 @@ export const MCP_SCOPES = [
   "mcp:company:read", // get_context
   "mcp:companies:read", // list_companies (firm portfolio)
 ].join(" ");
+
+// The "saisie augmentée" sends invoices through run_operations (demo dossiers only). Pennylane does not publish the
+// name of the scope it needs, so it is read from the server's OAuth metadata (RFC 8414, scopes_supported): the
+// scopes about operations are added to the read scopes above. Without the metadata, only the read scopes are asked.
+const METADATA_URL = "https://mcp.pennylane.com/.well-known/oauth-authorization-server";
+let scopesCache: string | null = null;
+export async function mcpScopes(): Promise<string> {
+  if (scopesCache) return scopesCache;
+  try {
+    const res = await fetch(METADATA_URL, { headers: { Accept: "application/json" } });
+    if (!res.ok) return MCP_SCOPES;
+    const meta = (await res.json()) as { scopes_supported?: string[] };
+    const base = MCP_SCOPES.split(" ");
+    const operations = (meta.scopes_supported ?? []).filter((sc) => /operation/i.test(sc) && !base.includes(sc));
+    scopesCache = [...base, ...operations].join(" ");
+    return scopesCache;
+  } catch {
+    return MCP_SCOPES;
+  }
+}
 export const MCP_REAUTH_MSG = "Nouvelle autorisation nécessaire : veuillez reconnecter Pennylane (MCP)";
 export const MCP_EXPIRED_MSG = "Connexion Pennylane (MCP) expirée : veuillez reconnecter";
 export const CALLBACK_PATH = "/api/public/pennylane-mcp/callback";
@@ -78,7 +98,7 @@ export async function getMcpPublicStatus() {
   let needsReauth = false;
   if (data?.status === "connected") {
     const { secrets } = await loadSecrets().catch(() => ({ secrets: null }));
-    needsReauth = !!secrets && secrets.scopes !== MCP_SCOPES;
+    needsReauth = !!secrets && secrets.scopes !== (await mcpScopes());
   }
   return { status: data?.status ?? "disconnected", error: data?.last_error ?? null, updatedAt: data?.updated_at ?? null, needsReauth };
 }
@@ -87,7 +107,8 @@ export async function getMcpPublicStatus() {
 export async function startOAuth(origin: string, userId: string) {
   const redirect_uri = `${origin}${CALLBACK_PATH}`;
   const { secrets } = await loadSecrets();
-  let client = secrets && secrets.redirect_uri === redirect_uri && secrets.scopes === MCP_SCOPES ? { client_id: secrets.client_id, client_secret: secrets.client_secret } : null;
+  const scopes = await mcpScopes();
+  let client = secrets && secrets.redirect_uri === redirect_uri && secrets.scopes === scopes ? { client_id: secrets.client_id, client_secret: secrets.client_secret } : null;
   if (!client) {
     const res = await fetch(`${AUTH_BASE}/register`, {
       method: "POST",
@@ -98,7 +119,7 @@ export async function startOAuth(origin: string, userId: string) {
         grant_types: ["authorization_code", "refresh_token"],
         response_types: ["code"],
         token_endpoint_auth_method: "none",
-        scope: MCP_SCOPES,
+        scope: scopes,
       }),
     });
     if (!res.ok) throw new Error(`Pennylane a refusé l'enregistrement de l'application (${res.status}).`);
@@ -113,14 +134,14 @@ export async function startOAuth(origin: string, userId: string) {
   await d.from("mcp_oauth_states").insert({
     state,
     created_by: userId,
-    secret_blob: await encrypt({ verifier, redirect_uri, ...client }),
+    secret_blob: await encrypt({ verifier, redirect_uri, scopes, ...client }),
   });
   const u = new URL(`${AUTH_BASE}/authorize`);
   u.search = new URLSearchParams({
     response_type: "code",
     client_id: client.client_id,
     redirect_uri,
-    scope: MCP_SCOPES,
+    scope: scopes,
     state,
     code_challenge: challenge,
     code_challenge_method: "S256",
@@ -148,7 +169,7 @@ export async function finishOAuth(state: string, code: string) {
   if (!row) throw new Error("state");
   await d.from("mcp_oauth_states").delete().eq("state", state);
   if (Date.now() - new Date(row.created_at).getTime() > 15 * 60000) throw new Error("state expired");
-  const s = await decrypt<{ verifier: string; redirect_uri: string; client_id: string; client_secret?: string }>(row.secret_blob);
+  const s = await decrypt<{ verifier: string; redirect_uri: string; scopes?: string; client_id: string; client_secret?: string }>(row.secret_blob);
   const tok = await tokenRequest(
     { grant_type: "authorization_code", code, redirect_uri: s.redirect_uri, client_id: s.client_id, code_verifier: s.verifier },
     s.client_secret,
@@ -161,7 +182,7 @@ export async function finishOAuth(state: string, code: string) {
       access_token: tok.access_token,
       refresh_token: tok.refresh_token,
       expires_at: Date.now() + (tok.expires_in ?? 3600) * 1000,
-      scopes: MCP_SCOPES,
+      scopes: s.scopes ?? MCP_SCOPES,
     },
     "connected",
     null,
