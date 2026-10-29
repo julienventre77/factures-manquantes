@@ -33,11 +33,12 @@ const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 // All the open lines of a dossier in one table: review, bulk actions, search, filters and sorting.
 export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
   txs: Tx[]; uploads: Upload[]; onChanged: () => void;
-  onRename: (detected: string, current: string) => void; onDownload: (path: string) => void;
+  onRename: (detected: string, current: string) => Promise<string | null>; onDownload: (path: string) => void;
 }) {
   const [tab, setTab] = useState<Tab>(() => (txs.some((t) => t.review_state === "pending") ? "pending" : "all"));
   const [query, setQuery] = useState("");
-  const [supplier, setSupplier] = useState<string | null>(null);
+  // Filter on one tiers. After a rename it keeps the old name until the lines are reloaded.
+  const [supplier, setSupplier] = useState<{ name: string; was?: string } | null>(null);
   const [dir, setDir] = useState<"all" | "out" | "in">("all");
   const [account, setAccount] = useState("all");
   const [sort, toggleSort] = useSort<SortKey>({ key: "date", dir: "desc" });
@@ -46,9 +47,11 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
   const [busy, setBusy] = useState(false);
 
   const prefixes = [...new Set(txs.flatMap((t) => accountsOf(t).map((a) => a.slice(0, 3))))].sort();
+  // Ignored once no line has that name any more (renamed or closed by a sync).
+  const tiers = [supplier?.name, supplier?.was].find((n) => n !== undefined && txs.some((t) => t.supplier === n)) ?? null;
   const base = txs.filter(
     (t) =>
-      (supplier === null || t.supplier === supplier) &&
+      (tiers === null || t.supplier === tiers) &&
       (dir === "all" || t.direction === dir) &&
       (account === "all" || accountsOf(t).some((a) => a.startsWith(account))) &&
       matchesSearch(txHaystack(t), query),
@@ -92,6 +95,12 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
     else toast.success(msg);
   }
   const filterBy = (set: () => void) => { set(); setLimit(PAGE); };
+  // A filter on the renamed tiers follows the new name, unless other lines keep the old one.
+  async function renameTiers(t: Tx) {
+    const keptByOthers = txs.some((x) => x.supplier === t.supplier && x.supplier_detected !== t.supplier_detected);
+    const name = await onRename(t.supplier_detected, t.supplier);
+    if (name && !keptByOthers) setSupplier((s) => (s?.name === t.supplier ? { name, was: t.supplier } : s));
+  }
 
   return (
     <section className="space-y-3">
@@ -110,10 +119,10 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
           <Input type="search" value={query} onChange={(e) => filterBy(() => setQuery(e.target.value))}
             placeholder="Libellé, tiers, montant ou date" className="h-9 bg-card pl-9" />
         </label>
-        {supplier !== null && (
+        {tiers !== null && (
           <span className="inline-flex h-9 items-center gap-1 rounded-full border border-primary/30 bg-pale-2 pl-3 pr-1 text-sm font-semibold text-primary">
-            Tiers : {supplierLabel(supplier)}
-            <button type="button" aria-label={`Retirer le filtre sur le tiers ${supplierLabel(supplier)}`} onClick={() => filterBy(() => setSupplier(null))}
+            Tiers : {supplierLabel(tiers)}
+            <button type="button" aria-label={`Retirer le filtre sur le tiers ${supplierLabel(tiers)}`} onClick={() => filterBy(() => setSupplier(null))}
               className="flex h-7 w-7 items-center justify-center rounded-full hover:bg-pale focus-visible:outline-2 focus-visible:outline-primary">
               <X className="h-4 w-4" />
             </button>
@@ -211,12 +220,13 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
                   <td className="px-3 py-2.5">
                     <span className="flex items-center gap-1">
                       <button type="button" title="Afficher seulement ce tiers" aria-label={`${supplierLabel(t.supplier)} : afficher seulement ce tiers`}
-                        onClick={() => filterBy(() => setSupplier(t.supplier))}
+                        onClick={() => filterBy(() => setSupplier({ name: t.supplier }))}
                         className={cn("text-left hover:underline", t.supplier === "Autre" && "italic text-muted-foreground")}>
                         {supplierLabel(t.supplier)}
                       </button>
                       <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0 text-muted-foreground" title="Corriger le tiers"
-                        aria-label={`Corriger le tiers ${t.supplier}`} onClick={() => onRename(t.supplier_detected, t.supplier)}>
+                        aria-label={`Corriger le tiers ${t.supplier}`}
+                        onClick={() => renameTiers(t)}>
                         <Pencil className="!size-3.5" />
                       </Button>
                     </span>

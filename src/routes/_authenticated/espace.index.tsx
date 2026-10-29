@@ -45,7 +45,8 @@ export function useClientTxs() {
         .eq("dossier_id", dossierId!)
         .eq("is_open", true)
         .eq("review_state", "sent")
-        .order("date");
+        .order("date")
+        .order("id");
       if (error) throw error;
       return data as Tx[];
     },

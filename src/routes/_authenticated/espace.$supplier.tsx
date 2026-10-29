@@ -29,7 +29,8 @@ Vous pouvez souvent obtenir un duplicata auprès du fournisseur. Votre comptable
 // For a sale, the missing document is the client's own invoice: guidance only, no tax rule.
 export const NO_INVOICE_NOTE_SALE = `À savoir : pour un encaissement, la pièce attendue est la facture (ou le justificatif de vente) que vous avez établie pour votre client.
 – Si vous l'avez émise, vous la retrouverez dans votre logiciel de facturation ou dans vos e-mails envoyés : vous pouvez la déposer ou la transférer.
-– S'il ne s'agit pas d'une vente (apport, prêt, virement entre vos comptes, remboursement d'un fournisseur…), précisez-le dans le commentaire.
+– S'il s'agit d'un remboursement d'un fournisseur, déposez plutôt l'avoir qu'il vous a adressé (choix 1).
+– S'il ne s'agit pas d'une vente (apport, prêt, virement entre vos comptes…), précisez-le dans le commentaire.
 Votre comptable reviendra vers vous si besoin.`;
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";
@@ -87,6 +88,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
   const isSale = group.direction === "in";
   const collect = isSale ? dossier.data?.collect_email_customers : dossier.data?.collect_email;
   const noun = isSale ? "encaissement" : "paiement";
+  const thisOne = isSale ? "cet encaissement" : "ce paiement";
   const plural = (n: number) => (n > 1 ? "s" : "");
   const refresh = () => qc.invalidateQueries({ queryKey: ["client-txs"] });
   const toggle = (id: string, on: boolean) =>
@@ -244,7 +246,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
               {selected.length === 0
                 ? "Sélectionnez au moins une ligne ci-dessus"
                 : selected.length === 1
-                  ? `Pour ce ${noun}, comment souhaitez-vous procéder ?`
+                  ? `Pour ${thisOne}, comment souhaitez-vous procéder ?`
                   : `Pour ces ${selected.length} ${noun}s, comment souhaitez-vous procéder ?`}
             </h2>
             <p className="mt-1 text-muted-foreground">Choisissez la solution la plus simple pour vous.</p>
@@ -295,7 +297,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
                   className="mt-2 bg-card md:text-base" />
                 <NoInvoiceWarning text={isSale ? NO_INVOICE_NOTE_SALE : NO_INVOICE_WARNING} />
                 <Button size="xl" className="mt-5" disabled={busy} onClick={markNoInvoice}>
-                  Je confirme : pas de facture pour {selected.length > 1 ? `ces ${selected.length} ${noun}s` : `ce ${noun}`}
+                  Je confirme : pas de facture pour {selected.length > 1 ? `ces ${selected.length} ${noun}s` : thisOne}
                 </Button>
               </ChoiceCard>
             </div>
