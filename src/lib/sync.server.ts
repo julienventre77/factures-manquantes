@@ -1,7 +1,7 @@
 import { normalizeSupplier } from "./supplier";
 import { findRule, type SkipRule } from "./skip-rules";
 
-export const BASE = "https://app.pennylane.com/api/external/v2";
+const BASE = "https://app.pennylane.com/api/external/v2";
 const LOOKBACK_DAYS = 365;
 
 type PlTx = {
@@ -67,7 +67,7 @@ async function pl<T>(path: string, companyId: string, token: string): Promise<T>
   throw new Error("Pennylane : trop de requêtes, réessayez plus tard.");
 }
 
-export async function plAll<T>(path: string, filter: unknown[], companyId: string, token: string): Promise<T[]> {
+async function plAll<T>(path: string, filter: unknown[], companyId: string, token: string): Promise<T[]> {
   const out: T[] = [];
   const f = encodeURIComponent(JSON.stringify(filter));
   let cursor: string | null = null;

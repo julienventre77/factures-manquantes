@@ -239,9 +239,12 @@ export const envoyerPennylane = createServerFn({ method: "POST" })
     const { invoiceId } = await envoyerFacture({
       companyId: String(d?.company_id ?? ""),
       facture: { id: v.id, numero: v.numero, fournisseur: v.fournisseur, date: v.date ?? "", totalHt: v.totalHt, totalTva: v.totalTva, totalTtc: v.totalTtc, libelleGenerique: "", libelleEcriture: v.libelleEcriture, lignes: v.lignes },
-      pdf: blob, fileName: upload.file_name, reference: `pbc-${v.id}`,
+      pdf: blob, fileName: upload.file_name,
+      // Noted as soon as the invoice exists, so a failure afterwards never sends it twice.
+      onCreated: async (id) => {
+        const { error: e2 } = await db.from("saisies").update({ pennylane_invoice_id: id, envoye_par: context.userId, envoye_le: new Date().toISOString() }).eq("id", s.id);
+        if (e2) throw new Error(`Facture créée dans Pennylane (n° ${id}), mais l'appli n'a pas pu le noter : ne la renvoyez pas.`);
+      },
     });
-    const { error: e2 } = await db.from("saisies").update({ pennylane_invoice_id: invoiceId, envoye_par: context.userId, envoye_le: new Date().toISOString() }).eq("id", s.id);
-    if (e2) throw new Error(`Facture importée dans Pennylane (n° ${invoiceId}), mais l'appli n'a pas pu le noter.`);
     return { invoiceId };
   });

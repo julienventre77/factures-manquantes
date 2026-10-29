@@ -1,28 +1,35 @@
-// Supplier invoice import into Pennylane (API v2, POST /supplier_invoices/import) from a validated saisie.
-// Pure helpers: the body, the VAT codes and the checks done before anything is sent.
+// Sending a validated saisie to Pennylane as a supplier invoice with its PDF, through the MCP (demo dossiers only).
+// Pure helpers: VAT codes, account lookup, checks done before anything is sent, and the update body.
+// Flow tested on the demo dossier 276211 on 29/10/2026: PDF upload, invoice created from the PDF, then the
+// firm's lines replace the ones Pennylane read.
 import { round2, tvaLigne, type Facture } from "@/lib/ventilation";
 
-// French VAT codes of the Pennylane API, by rate (the rates the screen offers).
+// French VAT codes used by Pennylane, by rate (the rates the screen offers).
 const CODES_TVA: [number, string][] = [[0.2, "FR_200"], [0.1, "FR_100"], [0.055, "FR_55"], [0.021, "FR_21"], [0, "exempt"]];
 export const codeTva = (taux: number) => CODES_TVA.find(([t]) => Math.abs(t - taux) < 1e-9)?.[1] ?? null;
 
 const chaine = (n: number) => round2(n).toFixed(2);
 
-export type Identifiants = {
-  fileAttachmentId: number;
-  supplierId: number;
-  // Account number → ledger account id in the Pennylane company.
-  comptes: Map<string, number>;
-};
+// One account number can exist several times in a Pennylane company, once per VAT rate.
+export type PlanItem = { id: number; number: string; vat_rate: string; enabled: boolean };
+export const clePlanItem = (compte: string, code: string) => `${compte}|${code}`;
 
-/** What prevents sending the invoice; empty when it can go. */
-export function blocagesEnvoi(f: Facture, comptesPennylane?: Set<string>) {
+/** Pennylane account for this number and VAT code: the one with the same rate, else the one for any rate. */
+export function choisirPlanItem(items: PlanItem[], compte: string, code: string) {
+  const actifs = items.filter((p) => p.enabled && p.number === compte);
+  return (actifs.find((p) => p.vat_rate === code) ?? actifs.find((p) => p.vat_rate === "any"))?.id ?? null;
+}
+
+/** What prevents sending the invoice; empty when it can go. planItems: account ids found in the dossier. */
+export function blocagesEnvoi(f: Facture, planItems?: Map<string, number>) {
   const out: string[] = [];
   for (const l of f.lignes) {
-    if (codeTva(l.tauxTva) === null) out.push(`« ${l.libelle} » : taux de TVA ${l.tauxTva * 100} % non pris en charge par l'import.`);
-    if (comptesPennylane && !comptesPennylane.has(l.compte)) out.push(`Le compte ${l.compte} n'existe pas dans le dossier Pennylane : créez-le d'abord.`);
+    const code = codeTva(l.tauxTva);
+    if (code === null) out.push(`« ${l.libelle} » : taux de TVA ${l.tauxTva * 100} % non pris en charge par l'envoi.`);
+    else if (planItems && !planItems.has(clePlanItem(l.compte, code)))
+      out.push(`Le compte ${l.compte} n'est pas ouvert dans le dossier Pennylane pour ce taux de TVA : ouvrez-le d'abord.`);
   }
-  // Pennylane requires the lines to add up to the invoice total; the invoice must also match its PDF.
+  // The invoice in Pennylane must match its PDF: the lines must add up to the invoice total.
   const ttc = round2(f.lignes.reduce((s, l) => s + l.ht + tvaLigne(l), 0));
   if (Math.abs(ttc - f.totalTtc) > 0.01)
     out.push(`Les lignes font ${chaine(ttc)} € TTC, la facture ${chaine(f.totalTtc)} € : corrigez la saisie avant l'envoi.`);
@@ -30,32 +37,31 @@ export function blocagesEnvoi(f: Facture, comptesPennylane?: Set<string>) {
   return [...new Set(out)];
 }
 
-/** Body of POST /supplier_invoices/import. Call blocagesEnvoi() first. */
-export function corpsImport(f: Facture, ids: Identifiants, referenceExterne: string) {
-  const lignes = f.lignes.map((l) => {
-    const tva = tvaLigne(l);
-    return {
-      currency_amount: chaine(l.ht + tva),
-      currency_tax: chaine(tva),
-      vat_rate: codeTva(l.tauxTva)!,
-      ledger_account_id: ids.comptes.get(l.compte)!,
-    };
-  });
-  const ht = round2(f.lignes.reduce((s, l) => s + l.ht, 0));
-  const tva = round2(f.lignes.reduce((s, l) => s + tvaLigne(l), 0));
+/**
+ * Body of the accountant update of the invoice Pennylane created from the PDF: the lines it read are removed and
+ * replaced by the validated ones (account, VAT, TTC amount, VAT amount, line label). Call blocagesEnvoi() first.
+ */
+export function corpsMiseAJour(f: Facture, planItems: Map<string, number>, lignesLues: number[]) {
   return {
-    file_attachment_id: ids.fileAttachmentId,
-    supplier_id: ids.supplierId,
-    date: f.date,
-    // The invoice is already paid (it justifies a bank payment): the deadline is the invoice date.
-    deadline: f.date,
-    ...(f.numero ? { invoice_number: f.numero } : {}),
-    label: f.libelleEcriture,
-    currency_amount_before_tax: chaine(ht),
-    currency_tax: chaine(tva),
-    // Sum of the lines as sent, so the balancing rule of the import holds to the cent.
-    currency_amount: chaine(lignes.reduce((s, l) => s + Number(l.currency_amount), 0)),
-    external_reference: referenceExterne,
-    invoice_lines: lignes,
+    invoice: {
+      direction: "supplier",
+      label: [f.fournisseur, f.libelleEcriture, f.numero].filter(Boolean).join(" - "),
+      date: f.date,
+      ...(f.numero ? { invoice_number: f.numero } : {}),
+      invoice_lines_attributes: [
+        ...lignesLues.map((id) => ({ id, _destroy: true })),
+        ...f.lignes.map((l) => {
+          const code = codeTva(l.tauxTva)!;
+          const tva = tvaLigne(l);
+          return {
+            pnl_plan_item_id: planItems.get(clePlanItem(l.compte, code))!,
+            vat_rate: code,
+            currency_amount: chaine(l.ht + tva),
+            currency_tax: chaine(tva),
+            ledger_event_label: l.libelle.slice(0, 200),
+          };
+        }),
+      ],
+    },
   };
 }

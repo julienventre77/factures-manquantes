@@ -28,4 +28,10 @@ describe("appels MCP", () => {
     expect(mcpCallAllowed("list_companies", { firm_id: 1, page: 1 })).toBe(true);
     expect(mcpCallAllowed("list_transactions", {})).toBe(false);
   });
+  it("vérifie le dossier d'une opération dans ses paramètres de chemin", () => {
+    expect(mcpCallAllowed("run_operations", { operation_id: "x", path_params: { company_id: 276211 } })).toBe(true);
+    expect(mcpCallAllowed("run_operations", { operation_id: "x", path_params: { company_id: 123 } })).toBe(false);
+    expect(mcpCallAllowed("run_operations", { operation_id: "x", company_id: 276211 })).toBe(false);
+    expect(mcpCallAllowed("run_operations", { operation_id: "x" })).toBe(false);
+  });
 });

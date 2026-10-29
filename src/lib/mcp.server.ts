@@ -203,7 +203,7 @@ async function accessToken(force = false): Promise<string> {
 }
 
 // ---------- MCP session ----------
-export type McpSession = { call: <T>(tool: string, args: Record<string, unknown>) => Promise<T>; close: () => Promise<void> };
+export type McpSession = { call: <T>(tool: string, args: Record<string, unknown>, intent?: string) => Promise<T>; close: () => Promise<void> };
 
 async function connect(token: string) {
   const client = new Client({ name: "pbc-list", version: "1.0.0" }, { jsonSchemaValidator: new CfWorkerJsonSchemaValidator() });
@@ -233,12 +233,12 @@ export async function openMcp(): Promise<McpSession> {
   }
   const conversation_id = crypto.randomUUID();
   return {
-    async call<T>(tool: string, args: Record<string, unknown>) {
+    async call<T>(tool: string, args: Record<string, unknown>, intent = "Synchronizing the company's unlettered bank payments for document collection.") {
       // Single gate for the demo-only rule: nothing reaches Pennylane for another company.
       if (!mcpCallAllowed(tool, args)) throw new McpNotDemo();
       const res = (await client.callTool({
         name: tool,
-        arguments: { ...args, conversation_id, intent: "Synchronizing the company's unlettered bank payments for document collection." },
+        arguments: { ...args, conversation_id, intent },
       })) as { isError?: boolean; content?: { type: string; text?: string }[]; structuredContent?: unknown };
       const text = (res.content ?? []).filter((c) => c.type === "text").map((c) => c.text).join("");
       if (res.isError) throw new McpToolError(text.slice(0, 300) || `Erreur de l'outil ${tool}`);
