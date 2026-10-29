@@ -1,0 +1,1671 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>PBC List — maquette du design A + B + C</title>
+<style>
+/* ============ Jetons ============ */
+:root{
+  --teal:#003d3d;--teal-d:#002b2b;--teal-2:#0f5150;--teal-l:#2c6b69;
+  --mint:#00f872;--mint-2:#a6fbcb;--mint-3:#cbfde1;--mint-4:#e9fef2;
+  --pale:#d9efeb;--pale-2:#e9f5f2;--pale-3:#f3f9f8;
+  --cream:#f8f4f1;--cream-2:#f0e8e0;--cream-3:#e4d8cc;
+  --yellow:#f3c628;--yellow-2:#f7dc80;--yellow-3:#fcf0c4;--yellow-4:#fef8e4;--yellow-ink:#5e4c0e;
+  --red:#b42318;--red-3:#fdecea;
+  --ink:#0f2b2b;--ink-2:#34494a;--ink-3:#566a6b;
+  --line:#e0e7e6;--line-2:#edf1f0;--line-warm:#ece2d8;--field:#7c8e8d;--lot:#6f8b88;
+  --board:#e7eceb;--cab-bg:#f4f6f6;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-d:"Inter Display",system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"JetBrains Mono","Liberation Mono",monospace;
+  --serif:Georgia,Charter,"Bitstream Charter",Cambria,"Times New Roman",serif;
+  --sh-1:0 1px 2px rgba(0,43,43,.06);
+  --sh-2:0 1px 2px rgba(0,43,43,.05),0 12px 28px -14px rgba(0,43,43,.22);
+  --sh-3:0 2px 6px rgba(0,43,43,.06),0 30px 60px -30px rgba(0,43,43,.38);
+}
+
+/* ============ Base ============ */
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:var(--board);color:var(--ink);font:400 16px/1.5 var(--font);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,h5,p,ul,ol,figure{margin:0}
+ul,ol{padding:0;list-style:none}
+a{color:inherit}
+button,input,textarea,select{font:inherit;color:inherit;margin:0}
+button{cursor:pointer;background:none;border:0;padding:0}
+code{font-family:var(--mono)}
+.ico{width:1.25em;height:1.25em;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;display:inline-block;vertical-align:middle}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.nw{white-space:nowrap}
+.sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+:focus-visible{outline:3px solid var(--teal);outline-offset:2px}
+.on-dark :focus-visible{outline-color:var(--mint)}
+.is-focus{outline:3px solid var(--teal)!important;outline-offset:2px}
+input[type=checkbox]{accent-color:var(--teal)}
+
+/* ============ Planche ============ */
+.board{max-width:1248px;margin:0 auto;padding:24px 16px 72px}
+.board>section{margin-bottom:72px}
+.board>section:last-child{margin-bottom:0}
+.caption{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 4px 18px}
+.caption h2{font:700 25px/1.2 var(--font-d);letter-spacing:-.015em;color:var(--teal);margin-right:4px}
+.caption p{flex-basis:100%;font-size:15px;color:var(--ink-2);max-width:900px}
+.mood{display:inline-flex;align-items:center;gap:7px;height:28px;padding:0 12px 0 10px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.mood i{width:12px;height:12px;border-radius:50%;flex:none}
+.mood-client{background:var(--cream);border:1px solid var(--cream-3)}
+.mood-client i{background:var(--cream-3);box-shadow:inset 0 0 0 2px #fff}
+.mood-cab{background:#fff;border:1px solid var(--line)}
+.mood-cab i{background:var(--teal)}
+.tag-fict{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px 0 10px;border-radius:999px;background:var(--yellow-3);color:var(--yellow-ink);font-size:13px;font-weight:600;white-space:nowrap}
+.tag-fict .ico{width:15px;height:15px}
+
+/* ============ Cadre (fenêtre) ============ */
+.frame{position:relative;border-radius:18px;overflow:hidden;border:1px solid #cbd5d3;box-shadow:var(--sh-3);background:#fff}
+.frame-bar{display:flex;align-items:center;gap:12px;height:40px;padding:0 16px;background:#eef1f0;border-bottom:1px solid #dae1df}
+.frame-dots{display:flex;gap:7px;width:47px;flex:none}
+.frame-dots i{width:11px;height:11px;border-radius:50%;background:#c5cfcd}
+.frame-addr{flex:1;display:flex;justify-content:center;min-width:0}
+.frame-addr span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-3);background:#fff;border:1px solid #dbe2e0;border-radius:8px;padding:3px 14px;white-space:nowrap}
+.frame-addr .ico{width:13px;height:13px}
+.frame-bar::after{content:"";width:47px;flex:none}
+
+/* ============ Logo PBC List & monogramme ============ */
+.logo{width:28px;height:28px;flex:none;--lg-bg:var(--teal);--lg-ck:var(--mint);--lg-ln:#fff}
+.logo--mint{--lg-bg:var(--mint);--lg-ck:var(--teal);--lg-ln:var(--teal)}
+.monogram{display:inline-grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;background:#fff;border:1.5px solid var(--teal);box-shadow:inset 0 0 0 3px #fff,inset 0 0 0 4px var(--pale);color:var(--teal);font:700 16px/1 var(--serif);letter-spacing:.06em;padding-left:.06em}
+.monogram--lg{width:64px;height:64px;font-size:22px;border-width:2px;box-shadow:inset 0 0 0 4px #fff,inset 0 0 0 5px var(--pale)}
+.monogram--xl{width:84px;height:84px;font-size:29px;border-width:2px;box-shadow:inset 0 0 0 5px #fff,inset 0 0 0 6px var(--pale)}
+.monogram--sm{width:34px;height:34px;font-size:13px}
+
+/* ============ Pastilles d'état ============ */
+.badge{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px 0 9px;border-radius:999px;font-size:14px;font-weight:600;line-height:1;white-space:nowrap;flex:none}
+.badge .ico{width:16px;height:16px}
+.b-todo,.b-review,.b-api{background:var(--yellow-3);color:var(--yellow-ink)}
+.b-progress,.b-sent,.b-mcp{background:var(--pale);color:var(--teal)}
+.b-done,.b-deposit,.b-mail{background:var(--mint-3);color:var(--teal)}
+.b-none{background:var(--cream-2);color:var(--ink-2)}
+.b-skip{background:#e9eded;color:var(--ink-2)}
+.b-buy{background:#eef1f0;color:var(--ink-2)}
+.b-sell{background:var(--mint-3);color:var(--teal)}
+.badge--sm{height:22px;gap:4px;padding:0 8px 0 6px;font-size:12px}
+.badge--sm .ico{width:13px;height:13px}
+
+/* ============ Étiquettes de lot ============ */
+.lot{display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 10px 0 8px;border-radius:999px;border:1.5px dashed var(--teal);background:#fff;color:var(--teal);font-size:12.5px;font-weight:700;line-height:1;white-space:nowrap;vertical-align:middle;flex:none}
+.lot .ico{width:13px;height:13px}
+.lot-zone{position:relative;border:1.5px dashed var(--lot);border-radius:20px;padding:26px 18px 18px;margin:30px 0 0}
+.lot-zone>.lot-head{position:absolute;top:-13px;left:16px;display:flex;align-items:center;gap:8px;padding-right:8px;background:var(--zone-bg,#fff)}
+.lot-head-note{font-size:13px;color:var(--ink-3);white-space:nowrap}
+.lot-inline{display:inline-flex;align-items:center;gap:8px;border:1.5px dashed var(--lot);border-radius:14px;padding:4px 6px 4px 4px}
+
+/* ============ Robot assistant ============ */
+.robot{position:absolute;right:20px;bottom:20px;z-index:5;display:flex;align-items:center;gap:14px}
+.robot-tip{position:relative;background:var(--teal);color:#fff;font-size:14px;font-weight:600;padding:9px 14px;border-radius:12px;box-shadow:var(--sh-2);white-space:nowrap}
+.robot-tip::after{content:"";position:absolute;right:-5px;top:50%;width:11px;height:11px;margin-top:-5.5px;background:var(--teal);transform:rotate(45deg);border-radius:2px}
+.robot-btn{position:relative;width:60px;height:60px;border-radius:50%;background:var(--teal);color:var(--mint);display:grid;place-items:center;box-shadow:0 0 0 4px #fff,0 12px 24px -8px rgba(0,43,43,.55)}
+.robot-btn .ico{width:30px;height:30px}
+.robot-btn::after{content:"";position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;background:var(--mint);box-shadow:0 0 0 2.5px var(--teal)}
+.robot--cab{gap:10px;padding:6px 6px 6px 10px;border:1.5px dashed var(--lot);border-radius:999px;background:rgba(244,246,246,.92)}
+.robot--cab .robot-btn{width:52px;height:52px;box-shadow:0 10px 20px -8px rgba(0,43,43,.55)}
+.robot--cab .robot-btn .ico{width:26px;height:26px}
+.robot--cab .robot-tip{font-size:13px;padding:7px 12px}
+.assistant{position:absolute;right:0;bottom:76px;width:340px;max-width:calc(100vw - 40px)}
+.assistant[hidden]{display:none}
+
+/* Panneau assistant (aussi dans l'introduction) */
+.as-panel{background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh-3);overflow:hidden;font-size:15px;text-align:left}
+.as-head{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 14px;background:var(--teal);color:#fff}
+.as-ava{width:34px;height:34px;border-radius:50%;background:var(--mint);color:var(--teal);display:grid;place-items:center;flex:none}
+.as-ava .ico{width:20px;height:20px}
+.as-head strong{flex:1;font-size:15px}
+.as-close{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;color:#fff}
+.as-close .ico{width:18px;height:18px}
+.as-body{padding:16px;display:flex;flex-direction:column;gap:12px;background:var(--pale-3)}
+.as-msg{background:#fff;border:1px solid var(--line);border-radius:4px 16px 16px 16px;padding:10px 12px;color:var(--ink);line-height:1.45}
+.as-sugg{display:flex;flex-wrap:wrap;gap:8px}
+.as-sugg button{min-height:36px;padding:0 12px;border-radius:999px;border:1px solid var(--field);background:#fff;color:var(--teal);font-size:14px;font-weight:600}
+.as-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line);background:#fff}
+.as-input input{flex:1;min-width:0;height:44px;border:1.5px solid var(--field);border-radius:12px;padding:0 12px;font-size:15px}
+.as-input input::placeholder{color:var(--ink-3);opacity:1}
+.as-send{width:44px;height:44px;border-radius:12px;background:var(--teal);color:var(--mint);display:grid;place-items:center;flex:none}
+.as-send .ico{width:20px;height:20px}
+
+/* ============ Introduction ============ */
+#intro{background:#fff;border-radius:24px;overflow:hidden;box-shadow:var(--sh-3);border:1px solid #cbd5d3}
+.fict-banner{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 12px;padding:11px 20px;background:var(--yellow);color:var(--teal);font-size:15px;text-align:center}
+.fict-banner .ico{width:19px;height:19px}
+.fict-banner strong{font-weight:700;font-size:16px}
+.cover{position:relative;overflow:hidden;background:var(--teal);color:#fff;padding:44px 48px 40px}
+.cover::before{content:"";position:absolute;right:-140px;top:-180px;width:560px;height:560px;border-radius:50%;background:radial-gradient(closest-side,rgba(0,248,114,.20),rgba(0,248,114,0))}
+.cover::after{content:"";position:absolute;left:-120px;bottom:-220px;width:420px;height:420px;border-radius:50%;border:70px solid rgba(255,255,255,.035)}
+.cover-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1fr) 460px;gap:32px;align-items:center}
+.cover-brand{display:inline-flex;align-items:center;gap:10px;font-weight:700;font-size:17px;letter-spacing:.01em}
+.cover-brand .logo{width:32px;height:32px}
+.cover-eyebrow{margin-top:28px;font-size:14px;font-weight:700;color:var(--mint);letter-spacing:.08em;text-transform:uppercase}
+.cover h1{margin-top:10px;font:700 46px/1.08 var(--font-d);letter-spacing:-.03em;max-width:620px}
+.cover-lead{margin-top:16px;font-size:18px;line-height:1.55;color:#cfe0de;max-width:560px}
+.cover-art{position:relative;height:290px}
+.mini{position:absolute;overflow:hidden;box-shadow:0 30px 50px -20px rgba(0,0,0,.55),0 0 0 1px rgba(255,255,255,.08)}
+.mini i{display:block}
+.mini--client{left:0;top:6px;width:250px;height:212px;border-radius:16px;background:var(--cream);transform:rotate(-4deg)}
+.mc-top{display:flex;align-items:center;gap:7px;height:28px;padding:0 10px;background:#fff;border-bottom:1px solid var(--line-warm)}
+.mc-mono{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--teal)}
+.mc-name{width:58px;height:6px;border-radius:4px;background:#c9d6d4}
+.mc-out{margin-left:auto;width:34px;height:12px;border-radius:5px;border:1.5px solid #b7c4c2}
+.mc-hero{margin:10px 10px 8px;padding:10px;border-radius:11px;background:var(--teal)}
+.mc-l1{width:78%;height:7px;border-radius:4px;background:rgba(255,255,255,.92)}
+.mc-l2{width:52%;height:7px;border-radius:4px;background:rgba(255,255,255,.92);margin-top:5px}
+.mc-bar{height:6px;border-radius:4px;background:rgba(255,255,255,.18);margin-top:11px;overflow:hidden}
+.mc-bar i{width:33%;height:100%;background:var(--mint)}
+.mc-cta{width:56px;height:13px;border-radius:5px;background:var(--mint);margin-top:10px}
+.mc-cards{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:0 10px}
+.mc-card{display:flex!important;align-items:center;gap:6px;height:36px;padding:0 7px;border-radius:9px;background:#fff;border:1px solid var(--line-warm)}
+.mc-card b{width:16px;height:16px;border-radius:50%;flex:none}
+.mc-card s{flex:1;height:5px;border-radius:3px;background:#d6dedd;text-decoration:none}
+.mc-card u{width:16px;height:8px;border-radius:4px;flex:none}
+.mini--cab{right:0;top:66px;width:282px;height:206px;border-radius:12px;background:var(--cab-bg);transform:rotate(3deg)}
+.mk-top{display:flex;align-items:center;gap:7px;height:22px;padding:0 9px;background:var(--teal)}
+.mk-logo{width:11px;height:11px;border-radius:3px;background:var(--mint)}
+.mk-name{width:64px;height:5px;border-radius:3px;background:rgba(255,255,255,.75)}
+.mk-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;padding:8px 9px 6px}
+.mk-tiles i{height:30px;border-radius:5px;background:#fff;border:1px solid var(--line);position:relative}
+.mk-tiles i::after{content:"";position:absolute;left:5px;bottom:6px;width:42%;height:7px;border-radius:2px;background:#9fb0ae}
+.mk-table{margin:2px 9px;background:#fff;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.mk-row{display:flex!important;align-items:center;gap:6px;height:16.5px;padding:0 7px;border-bottom:1px solid var(--line-2)}
+.mk-row:last-child{border-bottom:0}
+.mk-row s{height:4px;border-radius:2px;background:#cdd7d5;text-decoration:none}
+.mk-row u{width:20px;height:7px;border-radius:4px;flex:none}
+.mk-row b{margin-left:auto;width:24px;height:4px;border-radius:2px;background:#9fb0ae}
+.mini-label{position:absolute;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:#fff;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.18);padding:4px 10px;border-radius:999px}
+.ml-client{left:18px;bottom:6px}
+.ml-cab{right:18px;bottom:-6px}
+.abc{position:relative;z-index:1;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:34px}
+.abc li{display:flex;gap:14px;align-items:flex-start;padding:16px 18px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.13)}
+.abc-l{width:38px;height:38px;border-radius:12px;background:var(--mint);color:var(--teal);display:grid;place-items:center;font:800 19px/1 var(--font-d);flex:none}
+.abc p{font-size:15px;line-height:1.5;color:#cfe0de}
+.abc strong{color:#fff;font-weight:700}
+.intro-body{padding:36px 48px 40px}
+.ib-head{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px 14px;margin-bottom:16px}
+.ib-title{font:700 21px/1.25 var(--font-d);color:var(--teal);letter-spacing:-.01em}
+.ib-sub{font-size:15px;color:var(--ink-3)}
+.swatches{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px}
+.sw{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;display:flex;flex-direction:column}
+.sw-chip{height:78px;display:flex;align-items:flex-end;padding:8px 12px;font:700 22px/1 var(--font-d);border-bottom:1px solid var(--line)}
+.sw-meta{display:flex;flex-direction:column;gap:3px;padding:10px 12px 12px}
+.sw-meta strong{font-size:14px;color:var(--ink)}
+.sw-meta code{font-size:13px;color:var(--ink-2)}
+.sw-meta span{font-size:13px;line-height:1.4;color:var(--ink-3)}
+.derived{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:14px;font-size:13px;color:var(--ink-3)}
+.derived>strong{color:var(--ink-2);font-weight:600;margin-right:2px}
+.dchip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px 0 5px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-2);white-space:nowrap}
+.dchip i{width:18px;height:18px;border-radius:50%;border:1px solid rgba(0,0,0,.08)}
+.dchip code{font-size:12px}
+.principles{display:flex;flex-wrap:wrap;gap:8px 22px;margin-top:22px;padding-top:18px;border-top:1px solid var(--line-2);font-size:14px;color:var(--ink-2)}
+.principles li{display:inline-flex;align-items:center;gap:8px}
+.principles .ico{width:18px;height:18px;color:var(--teal);background:var(--mint-3);border-radius:50%;padding:3px}
+.intro-grid{display:grid;grid-template-columns:1.05fr 1.15fr .95fr;gap:16px;margin-top:28px;align-items:start}
+.icard{border:1px solid var(--line);border-radius:18px;padding:18px 18px 20px;background:#fff}
+.icard h3{font:700 17px/1.3 var(--font-d);color:var(--teal);margin-bottom:12px}
+.icard>p{font-size:14px;color:var(--ink-3);margin-bottom:12px}
+.lot-legend li{display:grid;grid-template-columns:70px minmax(0,1fr);gap:10px;align-items:start;padding:9px 0;border-top:1px solid var(--line-2)}
+.lot-legend li:first-child{border-top:0;padding-top:0}
+.lot-legend p{font-size:14px;line-height:1.45;color:var(--ink-2)}
+.lot-legend .lot{margin-top:1px}
+.lot1-pill{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:999px;background:#eef1f0;color:var(--ink-2);font-size:12px;font-weight:600;white-space:nowrap}
+.legend-note{margin-top:10px;font-size:13.5px;line-height:1.45;color:var(--ink-3);display:flex;gap:8px;align-items:flex-start}
+.legend-note .ico{width:16px;height:16px;margin-top:2px;color:var(--teal)}
+.st-group+.st-group{margin-top:12px}
+.st-group h4{font-size:12.5px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase;margin-bottom:7px}
+.st-row{display:flex;flex-wrap:wrap;gap:7px}
+.as-demo{display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+.as-demo .as-panel{width:100%}
+.as-demo-robot{display:flex;align-items:center;gap:14px}
+.intro-foot{margin-top:22px;display:flex;align-items:center;gap:10px;font-size:14.5px;color:var(--ink-2);background:var(--pale-2);border-radius:12px;padding:12px 14px}
+.intro-foot .monogram{width:34px;height:34px;font-size:12.5px}
+
+/* ============ Ambiance client ============ */
+.app-client{--zone-bg:var(--cream);background:var(--cream);color:var(--ink);font-size:17px;line-height:1.55}
+.c-header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 32px;background:#fff;border-bottom:1px solid var(--line-warm)}
+.firm{display:flex;align-items:center;gap:12px;min-width:0}
+.firm-txt{display:flex;flex-direction:column;line-height:1.25;min-width:0}
+.firm-txt strong{font-size:17px;color:var(--teal);font-weight:700}
+.firm-txt span{font-size:14px;color:var(--ink-3)}
+.c-header-right{display:flex;align-items:center;gap:22px}
+.c-contact{display:flex;gap:18px;font-size:14.5px}
+.c-contact a{display:inline-flex;align-items:center;gap:7px;color:var(--ink-2);text-decoration:none;white-space:nowrap}
+.c-contact .ico{width:17px;height:17px;color:var(--teal)}
+.c-main{max-width:920px;margin:0 auto;padding:40px 32px 8px}
+.c-main--narrow{max-width:860px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:48px;padding:0 22px;border-radius:14px;border:2px solid transparent;font-weight:600;font-size:17px;line-height:1.2;text-decoration:none;white-space:nowrap;transition:background-color .15s,border-color .15s}
+.btn .ico{width:20px;height:20px}
+.btn-primary{background:var(--teal);color:#fff}
+.btn-primary .ico{color:var(--mint)}
+.btn-primary:hover{background:var(--teal-d)}
+.btn-mint{background:var(--mint);color:var(--teal);font-weight:700}
+.btn-ghost{background:#fff;color:var(--teal);border-color:var(--field)}
+.btn-ghost:hover{border-color:var(--teal)}
+.btn-lg{min-height:56px;padding:0 28px;font-size:18px;border-radius:16px}
+.btn-sm{min-height:44px;padding:0 16px;font-size:15px;border-radius:12px;border-width:1.5px}
+.btn-sm .ico{width:18px;height:18px}
+.btn-block{width:100%}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label,.flabel{font-weight:600;font-size:15px;color:var(--ink)}
+.input{width:100%;min-height:54px;padding:12px 16px;border:1.5px solid var(--field);border-radius:14px;background:#fff;font-size:17px;color:var(--ink)}
+.input::placeholder{color:var(--ink-3);opacity:1}
+textarea.input{min-height:92px;resize:vertical;line-height:1.5;display:block}
+.input-wrap{position:relative}
+.input-wrap .input{padding-right:58px}
+.input-eye{position:absolute;right:5px;top:50%;margin-top:-22px;width:44px;height:44px;border-radius:10px;display:grid;place-items:center;color:var(--ink-2)}
+.input-eye .ico{width:22px;height:22px}
+
+/* Connexion */
+.login{position:relative;overflow:hidden;padding:64px 48px 24px}
+.login::before{content:"";position:absolute;left:-160px;bottom:-200px;width:520px;height:520px;border-radius:50%;background:var(--pale);opacity:.75}
+.login::after{content:"";position:absolute;right:-90px;top:-110px;width:300px;height:300px;border-radius:50%;background:var(--cream-2)}
+.login-grid{position:relative;z-index:1;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);grid-template-areas:"head card" "more card";column-gap:72px;row-gap:28px;align-items:start;max-width:1040px;margin:0 auto}
+.login-head{grid-area:head;padding-top:8px}
+.login-more{grid-area:more}
+.login-card{grid-area:card;background:#fff;border-radius:28px;padding:40px 40px 32px;box-shadow:var(--sh-3);border:1px solid var(--line-warm)}
+.login-card form{display:flex;flex-direction:column;gap:20px}
+.firm-block{display:flex;align-items:center;gap:16px;margin-bottom:30px}
+.firm-block strong{display:block;font-size:21px;color:var(--teal);line-height:1.2}
+.firm-block span{display:block;font-size:15px;color:var(--ink-3)}
+.login-title{font:700 48px/1.05 var(--font-d);letter-spacing:-.03em;color:var(--teal)}
+.login-sub{font-size:21px;line-height:1.45;color:var(--ink-2);margin-top:14px;max-width:460px}
+.login-points{display:flex;flex-direction:column;gap:14px}
+.login-points li{display:flex;align-items:center;gap:14px;font-size:17px;color:var(--ink)}
+.lp-ico{width:46px;height:46px;border-radius:14px;background:#fff;box-shadow:var(--sh-2);display:grid;place-items:center;color:var(--teal);flex:none}
+.lp-ico .ico{width:22px;height:22px}
+.login-contact{display:flex;flex-direction:column;gap:6px;margin-top:26px;padding:16px 18px;border-radius:18px;background:rgba(255,255,255,.7);border:1px solid var(--line-warm);font-size:15.5px;color:var(--ink-2)}
+.login-contact strong{color:var(--ink);font-weight:600}
+.login-contact .cl{display:flex;flex-wrap:wrap;gap:4px 18px}
+.login-contact a{display:inline-flex;align-items:center;gap:7px;color:var(--teal);font-weight:600;text-decoration:none;min-height:32px}
+.login-contact .ico{width:17px;height:17px}
+.privacy{display:flex;align-items:flex-start;gap:10px;font-size:15px;line-height:1.45;color:var(--ink-2);padding-top:4px}
+.privacy .ico{width:20px;height:20px;color:var(--teal);margin-top:1px}
+.login-foot{position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;gap:16px;max-width:1040px;margin:48px auto 0;padding-top:14px;border-top:1px solid var(--cream-3);font-size:14px;color:var(--ink-3)}
+.pbc-sign{display:inline-flex;align-items:center;gap:8px;font-weight:600;color:var(--ink-2)}
+.pbc-sign .logo{width:22px;height:22px}
+.cab-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 4px;color:var(--ink-2);font-size:15px;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--field)}
+.cab-link .ico{width:18px;height:18px}
+
+/* Accueil client */
+.c-hello h3{font:700 26px/1.25 var(--font-d);color:var(--ink);letter-spacing:-.015em}
+.c-hello p{margin-top:6px;font-size:17px;color:var(--ink-2);max-width:680px}
+.hero{position:relative;overflow:hidden;margin-top:24px;background:var(--teal);color:#fff;border-radius:28px;padding:36px 40px 34px;box-shadow:var(--sh-2)}
+.hero::before{content:"";position:absolute;right:-90px;top:-150px;width:380px;height:380px;border-radius:50%;border:64px solid rgba(0,248,114,.07)}
+.hero::after{content:"";position:absolute;right:120px;bottom:-120px;width:200px;height:200px;border-radius:50%;background:rgba(255,255,255,.035)}
+.hero>*{position:relative;z-index:1}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--mint);letter-spacing:.06em;text-transform:uppercase}
+.hero-eyebrow .ico{width:17px;height:17px}
+.hero-title{margin-top:10px;font:700 34px/1.18 var(--font-d);letter-spacing:-.025em;max-width:640px}
+.hero-progress{margin-top:28px;max-width:660px}
+.hp-row{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px}
+.hp-done{display:inline-flex;align-items:center;gap:9px;font-weight:700;font-size:19px}
+.hp-done .ico{color:var(--mint);width:22px;height:22px}
+.hp-left{font-size:15.5px;color:#cfe0de}
+.hp-bar{height:14px;border-radius:999px;background:rgba(255,255,255,.16);overflow:hidden}
+.hp-bar span{display:block;height:100%;border-radius:inherit;background:var(--mint);box-shadow:inset -3px 0 0 rgba(0,61,61,.25)}
+.hero-cta{display:flex;align-items:center;flex-wrap:wrap;gap:14px 22px;margin-top:28px}
+.hero-cta p{font-size:16px;color:#cfe0de}
+.hero-cta strong{color:#fff}
+.ctools{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px 14px;align-items:center}
+.search{position:relative;display:block}
+.search .ico{position:absolute;left:16px;top:50%;margin-top:-10px;width:20px;height:20px;color:var(--ink-3);pointer-events:none}
+.search input{width:100%;min-height:52px;padding:0 16px 0 48px;border:1.5px solid var(--field);border-radius:14px;background:#fff;font-size:17px}
+.search input::placeholder{color:var(--ink-3);opacity:1}
+.chip-row{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.chip-group{display:flex;flex-wrap:wrap;gap:8px}
+.chip-sep{width:1px;height:28px;background:var(--cream-3);margin:0 6px}
+.cchip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 18px;border-radius:999px;border:1.5px solid var(--field);background:#fff;font-size:16px;font-weight:600;color:var(--ink-2)}
+.cchip .ico{width:17px;height:17px}
+.cchip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.sortbtn{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:0 16px;border-radius:14px;border:1.5px solid var(--field);background:#fff;font-size:15px;font-weight:600;color:var(--ink-2);text-align:left;line-height:1.3}
+.sortbtn .ico{width:19px;height:19px;color:var(--teal)}
+.sortbtn b{color:var(--ink);font-weight:700}
+.rubric{margin-top:40px}
+.rubric-head{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+.rubric-ico{width:42px;height:42px;border-radius:13px;background:var(--pale);color:var(--teal);display:grid;place-items:center;flex:none}
+.rubric-ico .ico{width:22px;height:22px}
+.rubric-head h4{font:700 21px/1.3 var(--font-d);color:var(--teal);letter-spacing:-.01em}
+.rubric-meta{margin-left:auto;font-size:15px;color:var(--ink-3)}
+.cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.scard{display:grid;grid-template-columns:54px minmax(0,1fr) auto 22px;grid-template-areas:"av body badge chev";column-gap:16px;align-items:center;padding:20px 18px 20px 20px;min-height:112px;background:#fff;border:1px solid var(--line-warm);border-radius:22px;box-shadow:var(--sh-1);text-decoration:none;color:inherit;transition:border-color .15s,box-shadow .15s}
+.scard:hover{border-color:var(--teal-l);box-shadow:var(--sh-2)}
+.avatar{grid-area:av;width:54px;height:54px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;color:var(--teal);letter-spacing:.03em;flex:none}
+.av-yellow{background:var(--yellow-3)}.av-mint{background:var(--mint-3)}.av-pale{background:var(--pale)}.av-cream{background:var(--cream-2)}.av-teal{background:#cfe5e2}
+.scard-body{grid-area:body;display:flex;flex-direction:column;gap:3px;min-width:0}
+.scard-name{font-weight:700;font-size:18px;color:var(--ink);line-height:1.3}
+.scard-meta{font-size:15.5px;color:var(--ink-2)}
+.scard-meta .num{font-weight:700;color:var(--ink)}
+.scard-prog{display:flex;align-items:center;gap:10px;margin-top:6px;font-size:14px;color:var(--ink-2)}
+.mbar{width:84px;height:6px;border-radius:999px;background:#e2e8e7;overflow:hidden;flex:none}
+.mbar i{display:block;height:100%;background:var(--teal);border-radius:inherit}
+.scard .badge{grid-area:badge}
+.scard-chev{grid-area:chev;color:var(--ink-3);width:22px;height:22px}
+.scard.is-done{background:#fffdfb}
+.c-foot{max-width:920px;margin:0 auto;padding:36px 32px 112px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;font-size:15px;color:var(--ink-2)}
+.c-foot a{color:var(--teal);font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.c-foot .ico{width:17px;height:17px}
+.c-foot-sep{width:1px;height:16px;background:var(--cream-3)}
+.c-foot .pbc-sign{margin-left:auto;font-size:14px;color:var(--ink-3)}
+
+/* Écran fournisseur */
+.stepbar{display:flex;align-items:center;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-bottom:22px}
+.back{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-weight:600;font-size:16px;color:var(--teal);text-decoration:none;padding-right:8px}
+.back .ico{width:20px;height:20px}
+.steps{display:flex;align-items:center;gap:14px}
+.steps-label{font-weight:700;font-size:15px;color:var(--ink-2)}
+.steps-dots{display:flex;gap:6px}
+.steps-dots i{width:30px;height:8px;border-radius:999px;background:var(--cream-3)}
+.steps-dots i.on{background:var(--teal)}
+.supplier-head{display:flex;align-items:center;gap:18px;margin-bottom:24px}
+.avatar--lg{width:66px;height:66px;font-size:21px}
+.supplier-title{font:700 31px/1.18 var(--font-d);letter-spacing:-.025em;color:var(--teal)}
+.supplier-sub{font-size:16.5px;color:var(--ink-2);margin-top:5px}
+.supplier-sub .num{font-weight:700;color:var(--ink)}
+.supplier-head .badge{margin-left:auto}
+.ccard{background:#fff;border:1px solid var(--line-warm);border-radius:24px;box-shadow:var(--sh-1);overflow:hidden}
+.transfers-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;padding:12px 16px 12px 14px;border-bottom:1px solid var(--line-warm);background:var(--pale-3)}
+.check-row{display:inline-flex;align-items:center;gap:12px;min-height:44px;padding:0 6px;font-weight:600;font-size:16px;cursor:pointer}
+.app-client input[type=checkbox]{width:22px;height:22px;flex:none;margin:0}
+.sel-count{margin-left:auto;font-size:15px;color:var(--ink-2)}
+.sel-count .num{font-weight:700;color:var(--ink)}
+.tlist li{display:grid;grid-template-columns:48px 116px minmax(0,1fr) auto 224px;grid-template-areas:"chk date label amount status";align-items:center;column-gap:12px;padding:10px 20px 10px 16px;border-bottom:1px solid var(--line-2);min-height:66px}
+.tlist li:last-child{border-bottom:0}
+.tlist li.is-sel{background:var(--pale-3)}
+.t-check{grid-area:chk;display:grid;place-items:center;width:44px;height:44px;cursor:pointer}
+.t-done{grid-area:chk;justify-self:center;width:28px;height:28px;border-radius:50%;background:var(--mint-3);color:var(--teal);display:grid;place-items:center}
+.t-done .ico{width:16px;height:16px}
+.t-date{grid-area:date;font-size:16px;color:var(--ink-2)}
+.t-label{grid-area:label;font-family:var(--mono);font-size:14.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-amount{grid-area:amount;font-weight:700;font-size:17px;text-align:right}
+.tlist .badge{grid-area:status;justify-self:end}
+.choose-title{font:700 23px/1.3 var(--font-d);color:var(--teal);margin:38px 0 6px;letter-spacing:-.01em}
+.choose-sub{font-size:16px;color:var(--ink-2);margin-bottom:18px}
+.choices{display:flex;flex-direction:column;gap:16px}
+.choice{background:#fff;border:1.5px solid var(--line-warm);border-radius:24px;padding:24px;box-shadow:var(--sh-1)}
+.choice.is-open{border:2px solid var(--teal);box-shadow:0 0 0 5px var(--pale),var(--sh-2)}
+.choice-head{display:flex;align-items:flex-start;gap:16px}
+.choice-num{margin-left:auto;align-self:center;display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;color:var(--ink-3);white-space:nowrap}
+.choice.is-open .choice-num{color:var(--teal)}
+.choice-ico{width:54px;height:54px;border-radius:17px;display:grid;place-items:center;flex:none;color:var(--teal)}
+.choice-ico .ico{width:27px;height:27px}
+.ci-mint{background:var(--mint-3)}.ci-pale{background:var(--pale)}.ci-yellow{background:var(--yellow-3);color:var(--yellow-ink)}
+.choice h5{font:700 21px/1.3 var(--font-d);color:var(--ink);letter-spacing:-.01em}
+.choice-head p{font-size:16px;color:var(--ink-2);margin-top:3px}
+.choice-body{margin-top:18px;padding-left:70px}
+.dropzone{border:2px dashed var(--field);border-radius:18px;background:var(--pale-3);padding:24px 20px 20px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px}
+.dz-ico{width:40px;height:40px;color:var(--teal);margin-bottom:4px}
+.dz-title{font-weight:700;font-size:17px;color:var(--ink)}
+.dz-or{font-size:15px;color:var(--ink-3)}
+.dropzone .btn{margin-top:6px}
+.dz-hint{margin-top:8px;font-size:15px;color:var(--ink-2)}
+.dz-hint b{font-weight:700}
+.dz-multi{margin-top:14px;display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 10px;font-size:15px;color:var(--ink-2);padding:8px 14px 8px 8px;border:1.5px dashed var(--lot);border-radius:999px;background:#fff}
+.mailbox{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--pale-2);border:1px solid #c6e2dc;border-radius:16px;padding:12px 12px 12px 18px}
+.mail-addr{flex:1 1 320px;min-width:0;font-family:var(--mono);font-size:16px;font-weight:600;color:var(--teal);overflow-wrap:anywhere;line-height:1.4}
+.help{display:flex;gap:9px;align-items:flex-start;font-size:15.5px;line-height:1.5;color:var(--ink-2);margin-top:12px}
+.help .ico{width:19px;height:19px;color:var(--teal);margin-top:2px}
+.warning{display:flex;gap:14px;background:var(--yellow-4);border:1.5px solid var(--yellow-2);border-radius:18px;padding:18px 20px;margin-top:16px;color:var(--ink)}
+.warning>.ico{width:26px;height:26px;color:var(--yellow-ink);margin-top:1px}
+.warning p,.warning li{font-size:16px;line-height:1.55}
+.warning ul{margin:8px 0 10px}
+.warning li+li{margin-top:6px}
+.wizard-nav{display:flex;justify-content:space-between;gap:12px;margin-top:32px;padding-top:24px;border-top:1px solid var(--cream-3)}
+
+/* ============ Ambiance cabinet ============ */
+.app-cab{--zone-bg:var(--cab-bg);background:var(--cab-bg);color:var(--ink);font-size:14px;line-height:1.45}
+.topbar{display:flex;align-items:center;gap:26px;min-height:56px;padding:0 20px 0 22px;background:var(--teal);color:#fff}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;white-space:nowrap;font-size:15px}
+.brand b{font-weight:700}
+.brand span{color:#c9dcda}
+.topnav{display:flex;align-self:stretch;gap:2px}
+.topnav a{display:flex;align-items:center;gap:8px;padding:0 12px;color:#cfe0de;font-weight:500;text-decoration:none;border-top:3px solid transparent;border-bottom:3px solid transparent;white-space:nowrap}
+.topnav a .ico{width:17px;height:17px}
+.topnav a[aria-current="page"]{color:#fff;font-weight:600;border-bottom-color:var(--mint)}
+.tb-user{margin-left:auto;display:flex;align-items:center;gap:12px}
+.avatar-sm{width:32px;height:32px;border-radius:50%;background:var(--mint);color:var(--teal);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.tb-name{display:flex;flex-direction:column;line-height:1.2;font-weight:600;font-size:13.5px;white-space:nowrap}
+.tb-name small{font-weight:500;font-size:12px;color:#c9dcda}
+.btn-topbar{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:8px;border:1px solid rgba(255,255,255,.5);color:#fff;font-weight:600;font-size:13px;text-decoration:none;white-space:nowrap}
+.btn-topbar .ico{width:16px;height:16px}
+.cab-main{padding:22px 24px 104px}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px 16px;flex-wrap:wrap;margin-bottom:16px}
+.page-title{font:700 24px/1.2 var(--font-d);letter-spacing:-.015em;color:var(--teal)}
+.page-sub{font-size:13.5px;color:var(--ink-3);margin-top:3px}
+.cbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;height:36px;padding:0 14px;border-radius:8px;border:1px solid transparent;font-size:13.5px;font-weight:600;white-space:nowrap;text-decoration:none;line-height:1}
+.cbtn .ico{width:16px;height:16px}
+.cbtn-primary{background:var(--teal);color:#fff}
+.cbtn-primary .ico{color:var(--mint)}
+.cbtn-secondary{background:#fff;color:var(--teal);border-color:var(--field)}
+.cbtn-mint{background:var(--mint);color:var(--teal);font-weight:700}
+.cbtn-onteal{background:transparent;color:#fff;border-color:rgba(255,255,255,.55)}
+.cbtn-xs{height:28px;padding:0 9px;font-size:12.5px;border-radius:7px;gap:5px}
+.cbtn-xs .ico{width:14px;height:14px}
+.cbtn-icon{width:28px;padding:0}
+.cbtn-line{background:#fff;color:var(--teal);border-color:var(--teal)}
+.cbtn-quiet{background:#fff;color:var(--ink-2);border-color:var(--field)}
+.tiles{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:13px 15px 12px;box-shadow:var(--sh-1);min-width:0}
+.tile-top{display:flex;align-items:center;gap:9px;min-height:34px;font-size:13px;font-weight:600;line-height:1.3;color:var(--ink-2)}
+.tile-ico{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--pale);color:var(--teal);flex:none}
+.tile-ico .ico{width:16px;height:16px}
+.tile-ico--y{background:var(--yellow-3);color:var(--yellow-ink)}
+.tile-val{font:700 28px/1.15 var(--font-d);letter-spacing:-.02em;color:var(--ink);font-variant-numeric:tabular-nums;margin-top:6px;white-space:nowrap}
+.tile-sub{font-size:12.5px;color:var(--ink-3);margin-top:2px}
+.tile--attn{border-color:#ead9a0;box-shadow:inset 0 3px 0 var(--yellow),var(--sh-1)}
+.mcp{display:flex;align-items:center;gap:12px 14px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px 11px 14px;box-shadow:var(--sh-1)}
+.mcp-ico{width:36px;height:36px;border-radius:10px;background:var(--mint);color:var(--teal);display:grid;place-items:center;flex:none}
+.mcp-ico .ico{width:19px;height:19px}
+.mcp-txt{flex:1 1 360px;min-width:0}
+.mcp-title{font-weight:700;font-size:14px;color:var(--ink)}
+.mcp-desc{display:flex;flex-wrap:wrap;gap:2px 16px;font-size:13px;color:var(--ink-2);margin-top:1px}
+.mcp-ok{display:inline-flex;align-items:center;gap:5px;color:var(--teal);font-weight:600}
+.mcp-ok .ico{width:15px;height:15px}
+.mcp-actions{display:flex;gap:8px;flex-wrap:wrap}
+.lot-zone--cab{border-radius:14px;padding:22px 14px 14px;margin-top:26px}
+.ctl{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.csearch{position:relative;flex:1 1 240px;max-width:340px}
+.csearch .ico{position:absolute;left:11px;top:50%;margin-top:-8px;width:16px;height:16px;color:var(--ink-3);pointer-events:none}
+.csearch input{width:100%;height:36px;padding:0 10px 0 34px;border:1px solid var(--field);border-radius:8px;background:#fff;font-size:13.5px}
+.csearch input::placeholder{color:var(--ink-3);opacity:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 6px 0 12px;border-radius:999px;border:1px solid var(--field);background:#fff;font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.chip .count{min-width:22px;height:20px;padding:0 6px;border-radius:999px;background:#e9eeed;display:inline-grid;place-items:center;font-size:12px;font-variant-numeric:tabular-nums;color:var(--ink-2)}
+.chip[aria-pressed="true"]{background:var(--teal);border-color:var(--teal);color:#fff}
+.chip[aria-pressed="true"] .count{background:rgba(255,255,255,.18);color:#fff}
+.chip-y .count{background:var(--yellow-3);color:var(--yellow-ink)}
+.csort{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--field);border-radius:8px;background:#fff;font-size:13px;font-weight:600;color:var(--ink-2);margin-left:auto;white-space:nowrap}
+.csort .ico{width:16px;height:16px;color:var(--teal)}
+.csort b{color:var(--ink)}
+.bulk{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-top:12px;padding:7px 8px 7px 14px;border-radius:10px;background:var(--teal);color:#fff}
+.bulk-count{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px;margin-right:4px}
+.bulk-count .ico{width:17px;height:17px;color:var(--mint)}
+.bulk-sep{width:1px;height:20px;background:rgba(255,255,255,.28)}
+.bulk-cancel{margin-left:auto;color:#cfe0de;font-size:13px;text-decoration:underline;text-underline-offset:3px;padding:0 6px;white-space:nowrap}
+.table-wrap{background:#fff;border:1px solid var(--line);border-radius:12px;overflow-x:auto;box-shadow:var(--sh-1);margin-top:12px}
+.ctable{width:100%;border-collapse:collapse;font-size:13.5px}
+.ctable th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-2);background:#f7f9f9;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+.ctable td{padding:9px 12px;border-bottom:1px solid var(--line-2);white-space:nowrap;vertical-align:middle}
+.ctable tbody tr:last-child td{border-bottom:0}
+.ctable .ta-r{text-align:right}
+.th-s{display:inline-flex;align-items:center;gap:4px}
+.th-s .ico{width:13px;height:13px;color:#8a9a99}
+.th-s.is-sorted{color:var(--teal)}
+.th-s.is-sorted .ico{color:var(--teal)}
+.ta-r .th-s{flex-direction:row}
+.dos-name{font-weight:600;color:var(--ink);text-decoration:none;font-size:14px}
+.dos-warn{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12.5px;font-weight:600;color:var(--yellow-ink)}
+.dos-warn .ico{width:14px;height:14px}
+.cp{display:inline-grid;place-items:center;min-width:30px;height:22px;padding:0 8px;border-radius:999px;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums}
+.cp-y{background:var(--yellow-3);color:var(--yellow-ink)}
+.cp-0{color:var(--ink-3);font-weight:500}
+.prog{display:inline-flex;align-items:center;gap:10px}
+.prog .num{min-width:44px;font-weight:600;color:var(--ink-2)}
+.sync{display:inline-flex;align-items:center;gap:8px;color:var(--ink-2)}
+.src{display:inline-flex;align-items:center;gap:4px;height:20px;padding:0 7px;border-radius:6px;font-size:11.5px;font-weight:700;letter-spacing:.02em;white-space:nowrap}
+.src .ico{width:12px;height:12px}
+.src-mcp{background:var(--pale);color:var(--teal)}
+.src-api{background:var(--yellow-3);color:var(--yellow-ink)}
+.row-open{display:inline-grid;place-items:center;width:30px;height:30px;border-radius:8px;color:var(--teal);border:1px solid var(--line)}
+.row-open .ico{width:16px;height:16px}
+.muted{color:var(--ink-3)}
+.newdos{margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;box-shadow:var(--sh-1)}
+.newdos h4{display:flex;align-items:center;gap:8px;font-size:14.5px;font-weight:700;color:var(--ink);margin-bottom:10px}
+.newdos h4 .ico{width:17px;height:17px;color:var(--teal)}
+.nd-fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.75fr) minmax(0,1.5fr) auto;gap:12px;align-items:end}
+.cfield{display:flex;flex-direction:column;gap:6px;min-width:0}
+.cfield label,.cflabel{font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.cinput{width:100%;height:36px;padding:0 10px;border:1px solid var(--field);border-radius:8px;background:#fff;font-size:13.5px;color:var(--ink)}
+.cinput::placeholder{color:var(--ink-3);opacity:1}
+.cinput.mono{font-family:var(--mono);font-size:12.5px}
+
+/* Page dossier */
+.crumbs{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-3);margin-bottom:8px}
+.crumbs a{color:var(--teal);font-weight:600;text-decoration:none}
+.crumbs [aria-current]{color:var(--ink-2)}
+.dos-head{display:flex;justify-content:space-between;align-items:flex-start;gap:14px 20px;flex-wrap:wrap;margin-bottom:14px}
+.dos-head>div:first-child{min-width:0;flex:1 1 520px}
+.dos-meta{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--ink-2);margin-top:7px}
+.kv{display:inline-flex;align-items:center;gap:6px;min-width:0;flex-wrap:wrap}
+.kv>.ico{width:15px;height:15px;color:var(--teal)}
+.kv code{font-size:12.5px;background:#eaefee;padding:2px 7px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.dos-sync{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;font-size:13px;color:var(--ink-2);margin-top:8px}
+.dos-sync .ico{width:15px;height:15px;color:var(--teal)}
+.dos-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.dstats{display:flex;flex-wrap:wrap;gap:10px}
+.dstat{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 12px 8px 10px;box-shadow:var(--sh-1)}
+.dstat .tile-ico{width:26px;height:26px;border-radius:7px}
+.dstat b{font:700 19px/1 var(--font-d);font-variant-numeric:tabular-nums;color:var(--ink)}
+.dstat span{font-size:12.5px;color:var(--ink-2)}
+.ctable .sel{width:1%;padding-left:12px;padding-right:12px;border-left:1.5px dashed var(--lot);border-right:1.5px dashed var(--lot)}
+.tc{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--ink-2)}
+.ctable input[type=checkbox]{width:16px;height:16px;margin:0;vertical-align:middle}
+.lib{display:block;max-width:196px;overflow:hidden;text-overflow:ellipsis;font-family:var(--mono);font-size:12.5px;color:var(--ink)}
+.tiers-unk{color:var(--ink-3);font-style:italic}
+.acct{font-family:var(--mono);font-size:12.5px;padding:2px 6px;border-radius:5px;background:#eaefee;color:var(--ink)}
+.revue{display:flex;align-items:center;gap:6px}
+.has-tip{position:relative;display:inline-flex}
+.tip{position:absolute;bottom:calc(100% + 7px);left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:5px 9px;border-radius:6px;white-space:nowrap;pointer-events:none;box-shadow:var(--sh-2);z-index:2}
+.tip::after{content:"";position:absolute;left:50%;top:100%;margin-left:-5px;border:5px solid transparent;border-top-color:var(--ink)}
+.ctable tr.is-sel td{background:var(--pale-3)}
+.ctable tr.is-hover td{background:#eef7f4}
+.ctable td.amount{font-weight:600;color:var(--ink)}
+.table-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-3);background:#fbfcfc}
+.table-foot a{color:var(--teal);font-weight:600;text-decoration:none}
+
+/* Paramètres */
+.settings{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);gap:18px;align-items:start}
+.panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px;box-shadow:var(--sh-1);min-width:0}
+.panel-title{display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;font-size:15px;font-weight:700;color:var(--ink);margin-bottom:16px}
+.panel-title small{font-size:12.5px;font-weight:500;color:var(--ink-3)}
+.live{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:999px;background:var(--mint-3);color:var(--teal);font-size:12px;font-weight:700}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--teal)}
+.sform{display:flex;flex-direction:column;gap:16px}
+.logo-drop{display:flex;align-items:center;gap:18px;border:1.5px dashed var(--field);border-radius:12px;padding:16px;background:var(--pale-3);flex-wrap:wrap}
+.logo-drop p{font-size:13.5px;color:var(--ink-2)}
+.logo-drop .ld-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.logo-drop .hint{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+.cfield-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.snote{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2);background:var(--pale-2);border-radius:8px;padding:10px 12px}
+.snote .ico{width:17px;height:17px;color:var(--teal)}
+.form-foot{display:flex;justify-content:flex-end;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line-2)}
+.form-foot small{font-size:12.5px;color:var(--ink-3);margin-right:auto}
+.prov{display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:10px 14px;border:1px solid #c6e2dc;background:var(--pale-2);border-radius:10px;font-size:13.5px;color:var(--ink-2)}
+.prov .ico{width:17px;height:17px;color:var(--teal)}
+.preview-stage{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--cream)}
+.preview-stage .c-header{padding:12px 16px}
+.preview-stage .c-contact{display:none}
+.pv-body{padding:18px 16px 20px}
+.pv-login{background:#fff;border:1px solid var(--line-warm);border-radius:18px;padding:18px;text-align:center;box-shadow:var(--sh-1)}
+.pv-login .monogram{margin:0 auto}
+.pv-login strong{display:block;margin-top:8px;font-size:15px;color:var(--teal)}
+.pv-login .pv-title{font:700 22px/1.2 var(--font-d);color:var(--teal);margin-top:4px;letter-spacing:-.02em}
+.pv-login p{font-size:13px;color:var(--ink-2);margin-top:4px}
+.pv-contact{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-warm);font-size:13px;color:var(--ink-2)}
+.pv-contact span{display:inline-flex;align-items:center;gap:6px}
+.pv-contact .ico{width:15px;height:15px;color:var(--teal)}
+.pv-hint{font-size:12.5px;color:var(--ink-3);margin-top:10px}
+
+/* ============ Responsive ============ */
+@media (max-width:1100px){
+  .cover-grid{grid-template-columns:minmax(0,1fr) 380px}
+  .cover-art{transform:scale(.84);transform-origin:right center}
+  .swatches{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .intro-grid{grid-template-columns:1fr 1fr}
+  .tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .nd-fields{grid-template-columns:1fr 1fr}
+  .settings{grid-template-columns:1fr}
+}
+@media (max-width:860px){
+  .cover-grid{grid-template-columns:1fr}
+  .cover-art{display:none}
+  .abc{grid-template-columns:1fr}
+  .intro-grid{grid-template-columns:1fr}
+  .login-grid{grid-template-columns:1fr;grid-template-areas:"head" "card" "more";max-width:520px}
+  .cards{grid-template-columns:1fr}
+  .c-contact{display:none}
+}
+@media (max-width:640px){
+  .board{padding:0 0 40px}
+  .board>section{margin-bottom:44px}
+  #intro{border-radius:0;border-left:0;border-right:0}
+  .caption{margin:0 16px 14px;padding-top:20px}
+  .caption h2{font-size:22px}
+  .caption p{font-size:14.5px}
+  .frame{border-radius:0;border-left:0;border-right:0;box-shadow:none}
+  .frame-bar{display:none}
+  .fict-banner{font-size:14px}
+  .cover{padding:28px 20px 26px}
+  .cover h1{font-size:32px}
+  .cover-lead{font-size:16px}
+  .intro-body{padding:24px 16px 28px}
+  .swatches{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .principles{flex-direction:column}
+  .app-client{font-size:16px}
+  .c-header{padding:12px 16px;gap:10px}
+  .firm{gap:10px}
+  .firm .monogram{width:40px;height:40px;font-size:14.5px}
+  .firm-txt strong{font-size:16px}
+  .firm-txt span{font-size:13.5px}
+  .c-header .btn-sm{padding:0 12px;font-size:14.5px;gap:7px}
+  .c-main{padding:24px 16px 8px}
+  .login{padding:28px 16px 16px}
+  .login::before{width:360px;height:360px;left:-180px;bottom:-140px}
+  .login::after{width:200px;height:200px;right:-90px;top:-90px}
+  .login-head{text-align:center;padding-top:0}
+  .firm-block{flex-direction:column;gap:10px;margin-bottom:18px}
+  .login-title{font-size:36px}
+  .login-sub{font-size:18px;margin:10px auto 0}
+  .login-card{padding:24px 20px 22px;border-radius:24px}
+  .login-points{display:none}
+  .login-contact{margin-top:0}
+  .login-foot{margin-top:28px}
+  .c-hello h3{font-size:23px}
+  .c-hello p{font-size:16px}
+  .hero{padding:24px 20px 24px;border-radius:24px;margin-top:18px}
+  .hero-title{font-size:25px}
+  .hp-done{font-size:17px}
+  .hero-cta .btn{width:100%}
+  .hero-cta p{font-size:15px}
+  .lot-zone{padding:24px 12px 14px}
+  .lot-head-note{display:none}
+  .ctools{grid-template-columns:1fr}
+  .sortbtn{width:100%;white-space:normal;padding:10px 14px}
+  .chip-sep{display:none}
+  .cchip{padding:0 16px;font-size:15.5px}
+  .rubric{margin-top:32px}
+  .rubric-head h4{font-size:19px}
+  .rubric-meta{margin-left:54px;width:100%;margin-top:-10px;font-size:14.5px}
+  .scard{grid-template-columns:48px minmax(0,1fr) 20px;grid-template-areas:"av body chev" "av badge chev";row-gap:10px;column-gap:14px;padding:16px 14px 16px 16px;min-height:0}
+  .scard .badge{justify-self:start}
+  .avatar{width:48px;height:48px;font-size:15.5px}
+  .scard-chev{width:20px;height:20px}
+  .c-foot{padding:28px 16px 100px;font-size:14.5px}
+  .c-foot .pbc-sign{margin-left:0;width:100%}
+  .c-foot-sep{display:none}
+  .robot{right:16px;bottom:18px}
+  .robot-tip{display:none}
+  .robot-btn{width:56px;height:56px}
+  .robot-btn .ico{width:28px;height:28px}
+  .stepbar{margin-bottom:16px}
+  .supplier-head{flex-wrap:wrap;gap:14px;margin-bottom:18px}
+  .supplier-head>div{flex:1 1 200px;min-width:0}
+  .supplier-head .badge{margin-left:0}
+  .avatar--lg{width:56px;height:56px;font-size:18px}
+  .supplier-title{font-size:24px}
+  .supplier-sub{font-size:15.5px}
+  .ccard{border-radius:20px}
+  .transfers-head{padding:10px 12px}
+  .sel-count{margin-left:6px;width:100%;font-size:14.5px}
+  .tlist li{grid-template-columns:44px minmax(0,1fr) auto;grid-template-areas:"chk date amount" "chk label label" "chk status status";row-gap:4px;padding:12px 14px 12px 8px}
+  .tlist .badge{justify-self:start;margin-top:4px}
+  .t-label{white-space:normal;overflow-wrap:anywhere;font-size:14px}
+  .t-date{font-size:15px}
+  .choose-title{font-size:20px;margin-top:30px}
+  .choice{padding:18px 16px;border-radius:22px}
+  .choice-head{gap:12px}
+  .choice-ico{width:46px;height:46px;border-radius:14px}
+  .choice-ico .ico{width:23px;height:23px}
+  .choice h5{font-size:19px}
+  .choice-num{display:none}
+  .choice-body{padding-left:0;margin-top:16px}
+  .dropzone{padding:20px 14px 16px}
+  .dz-multi{border-radius:16px;padding:10px 12px}
+  .mailbox{padding:14px}
+  .mail-addr{flex-basis:100%;font-size:15px}
+  .mailbox .btn{width:100%}
+  .warning{padding:16px 14px;gap:10px}
+  .warning p,.warning li{font-size:15px}
+  .warning>.ico{width:22px;height:22px}
+  .wizard-nav .btn{flex:1;padding:0 14px}
+  .topbar{flex-wrap:wrap;gap:6px 14px;padding:10px 16px 0}
+  .topnav{order:3;width:100%;overflow-x:auto}
+  .tb-name{display:none}
+  .cab-main{padding:18px 14px 96px}
+  .tiles{grid-template-columns:1fr 1fr}
+  .tile-val{font-size:23px}
+  .csort{margin-left:0}
+  .nd-fields{grid-template-columns:1fr}
+  .cfield-row{grid-template-columns:1fr}
+  .robot--cab .robot-tip{display:none}
+  .assistant{right:0;width:300px}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ Icônes (SVG en ligne) ============ -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="logo" viewBox="0 0 32 32"><rect width="32" height="32" rx="9" style="fill:var(--lg-bg)"/><path d="M8.2 11.6l2.3 2.3 3.9-4" style="fill:none;stroke:var(--lg-ck);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"/><path d="M18 12h6" style="fill:none;stroke:var(--lg-ln);stroke-width:2.6;stroke-linecap:round"/><path d="M8.2 20.1l2.3 2.3 3.9-4" style="fill:none;stroke:var(--lg-ck);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round"/><path d="M18 20.5h6" style="fill:none;stroke:var(--lg-ln);stroke-width:2.6;stroke-linecap:round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.4 12.4 2.5 2.5 4.8-5.2"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></symbol>
+    <symbol id="i-half" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 14.5V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3.5"/></symbol>
+    <symbol id="i-cloud-up" viewBox="0 0 24 24"><path d="M7.5 18.5H7a4.5 4.5 0 0 1-.9-8.9 6 6 0 0 1 11.6-1.2A4.6 4.6 0 0 1 17.5 18.5"/><path d="M12 12.5v8"/><path d="m9 15.5 3-3 3 3"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m3.8 7.5 8.2 6 8.2-6"/></symbol>
+    <symbol id="i-mail-fwd" viewBox="0 0 24 24"><path d="M20.5 11V7.5A2.5 2.5 0 0 0 18 5H6a2.5 2.5 0 0 0-2.5 2.5v9A2.5 2.5 0 0 0 6 19h7"/><path d="m4 7.5 8 5.5 8-5.5"/><path d="M15.5 18h6"/><path d="m19 15.5 2.5 2.5-2.5 2.5"/></symbol>
+    <symbol id="i-file-check" viewBox="0 0 24 24"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 3v5h5"/><path d="m9 14.5 2 2 4-4"/></symbol>
+    <symbol id="i-file-x" viewBox="0 0 24 24"><path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z"/><path d="M14 3v5h5"/><path d="m9.8 12.3 4.4 4.4"/><path d="m14.2 12.3-4.4 4.4"/></symbol>
+    <symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></symbol>
+    <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-right" viewBox="0 0 24 24"><path d="m9.5 6 6 6-6 6"/></symbol>
+    <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9.5 6 6 6-6"/></symbol>
+    <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m6 14.5 6-6 6 6"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="12" height="12" rx="2.5"/><path d="M15.5 8.5V6A2.5 2.5 0 0 0 13 3.5H6A2.5 2.5 0 0 0 3.5 6v7A2.5 2.5 0 0 0 6 15.5h2.5"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2.5"/><path d="M8 10.5v-3a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.4 2.9 8.3 7 9.8 4.1-1.5 7-5.4 7-9.8V5.8z"/><path d="m9 12 2.2 2.2L15.5 10"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/></symbol>
+    <symbol id="i-sort" viewBox="0 0 24 24"><path d="M8 4v16"/><path d="m4.5 7.5 3.5-3.5 3.5 3.5"/><path d="M16 20V4"/><path d="m12.5 16.5 3.5 3.5 3.5-3.5"/></symbol>
+    <symbol id="i-sort-down" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m6.5 13.5 5.5 5.5 5.5-5.5"/></symbol>
+    <symbol id="i-priority" viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h11"/><path d="M4 18h6"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><rect x="4.5" y="8" width="15" height="11.5" rx="3.5"/><path d="M12 8V5.2"/><circle cx="12" cy="4" r="1.4" fill="currentColor" stroke="none"/><circle cx="9.3" cy="13.2" r="1.5" fill="currentColor" stroke="none"/><circle cx="14.7" cy="13.2" r="1.5" fill="currentColor" stroke="none"/><path d="M10.2 16.5h3.6"/><path d="M2.5 12.5v3"/><path d="M21.5 12.5v3"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><circle cx="12" cy="7.8" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.3 2.7 17.6a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 4.3a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4.5"/><circle cx="12" cy="17.2" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2.5v4"/><path d="M15 2.5v4"/><path d="M6.5 6.5h11V10a5.5 5.5 0 0 1-11 0z"/><path d="M12 15.5v6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11.5A8 8 0 0 0 5.6 7.2L4 9"/><path d="M4 4.5V9h4.5"/><path d="M4 12.5a8 8 0 0 0 14.4 4.3L20 15"/><path d="M20 19.5V15h-4.5"/></symbol>
+    <symbol id="i-sparkles" viewBox="0 0 24 24"><path d="M10.5 3.5 12.3 8.2 17 10l-4.7 1.8-1.8 4.7-1.8-4.7L4 10l4.7-1.8z"/><path d="m18.5 14.5.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9.5 20.5H6A2.5 2.5 0 0 1 3.5 18V6A2.5 2.5 0 0 1 6 3.5h3.5"/><path d="m15.5 16.5 4.5-4.5-4.5-4.5"/><path d="M20 12H9.5"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><path d="M6.6 3.5h2.6l1.6 4.2-2 1.3a11 11 0 0 0 6.2 6.2l1.3-2 4.2 1.6v2.6a2 2 0 0 1-2.2 2A16.5 16.5 0 0 1 4.6 5.7a2 2 0 0 1 2-2.2z"/></symbol>
+    <symbol id="i-briefcase" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2.5"/><path d="M8.5 7V5.5a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2V7"/><path d="M3 12.5h18"/></symbol>
+    <symbol id="i-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l-1.1 11.1a1.5 1.5 0 0 1-1.5 1.4H8.1a1.5 1.5 0 0 1-1.5-1.4z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></symbol>
+    <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3.5h12v17l-3-1.8-3 1.8-3-1.8-3 1.8z"/><path d="M9.5 8.5h5"/><path d="M9.5 12h5"/><path d="M9.5 15.5h3"/></symbol>
+    <symbol id="i-send" viewBox="0 0 24 24"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.5 18-4-7.5-7.5-4z"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m5.7 5.7 12.6 12.6"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M4 9.5h10.5a5.5 5.5 0 0 1 0 11H9"/><path d="m7.5 13-3.5-3.5L7.5 6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4"/><path d="M5 4.5h12l-2.5 4 2.5 4H5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17"/><path d="M8 3v4"/><path d="M16 3v4"/></symbol>
+    <symbol id="i-up-right" viewBox="0 0 24 24"><path d="M7 17 17 7"/><path d="M8.5 7H17v8.5"/></symbol>
+    <symbol id="i-down-left" viewBox="0 0 24 24"><path d="M17 7 7 17"/><path d="M15.5 17H7V8.5"/></symbol>
+    <symbol id="i-euro" viewBox="0 0 24 24"><path d="M17.5 6.6a7 7 0 1 0 0 10.8"/><path d="M4 10.5h9"/><path d="M4 13.5h9"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7A2.5 2.5 0 0 1 6 4.5h3.5l2 2.2H18a2.5 2.5 0 0 1 2.5 2.5v8.3A2.5 2.5 0 0 1 18 20H6a2.5 2.5 0 0 1-2.5-2.5z"/></symbol>
+    <symbol id="i-inbox" viewBox="0 0 24 24"><path d="M3.5 13.5h5l1.5 2.5h4l1.5-2.5h5"/><path d="M6.2 5h11.6l2.7 8.5v4.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2v-4.5z"/></symbol>
+    <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h9"/><path d="M17 7h3"/><circle cx="15" cy="7" r="2"/><path d="M4 17h3"/><path d="M11 17h9"/><circle cx="9" cy="17" r="2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6.5h11"/><path d="M9 12h11"/><path d="M9 17.5h11"/><circle cx="4.8" cy="6.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.8" cy="17.5" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-hand" viewBox="0 0 24 24"><path d="M7 11.5V6.8a1.6 1.6 0 0 1 3.2 0V11"/><path d="M10.2 10.5V5.2a1.6 1.6 0 0 1 3.2 0v5.3"/><path d="M13.4 10.5V6.4a1.6 1.6 0 0 1 3.2 0v6.3"/><path d="M16.6 10.2a1.6 1.6 0 0 1 3.2 0V14a7 7 0 0 1-7 7h-1.3a6 6 0 0 1-4.6-2.2L4.2 15.5a1.6 1.6 0 0 1 2.4-2.1L7 13.8"/></symbol>
+  </defs>
+</svg>
+
+<main class="board">
+
+<!-- ================================================================= -->
+<!-- 0. Introduction                                                      -->
+<!-- ================================================================= -->
+<section id="intro" aria-labelledby="intro-title">
+  <p class="fict-banner"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg><strong>Maquette — données fictives</strong><span>Noms, montants, dates et coordonnées sont inventés pour l'illustration.</span></p>
+
+  <div class="cover on-dark">
+    <div class="cover-grid">
+      <div class="cover-main">
+        <div class="cover-brand"><svg class="logo logo--mint" aria-hidden="true"><use href="#logo"/></svg>PBC List</div>
+        <p class="cover-eyebrow">Proposition de design</p>
+        <h1 id="intro-title">PBC List — maquette du design A + B + C</h1>
+        <p class="cover-lead">Vos clients transmettent leurs factures manquantes pas à pas ; le cabinet revoit chaque ligne avant de l'envoyer.</p>
+      </div>
+      <div class="cover-art" aria-hidden="true">
+        <div class="mini mini--client">
+          <div class="mc-top"><i class="mc-mono"></i><i class="mc-name"></i><i class="mc-out"></i></div>
+          <div class="mc-hero"><i class="mc-l1"></i><i class="mc-l2"></i><div class="mc-bar"><i></i></div><i class="mc-cta"></i></div>
+          <div class="mc-cards">
+            <i class="mc-card"><b style="background:var(--yellow-3)"></b><s></s><u style="background:var(--pale)"></u></i>
+            <i class="mc-card"><b style="background:var(--mint-3)"></b><s></s><u style="background:var(--yellow-3)"></u></i>
+            <i class="mc-card"><b style="background:var(--cream-2)"></b><s></s><u style="background:var(--mint-3)"></u></i>
+            <i class="mc-card"><b style="background:var(--pale)"></b><s></s><u style="background:var(--mint-3)"></u></i>
+          </div>
+        </div>
+        <div class="mini mini--cab">
+          <div class="mk-top"><i class="mk-logo"></i><i class="mk-name"></i></div>
+          <div class="mk-tiles"><i></i><i></i><i></i><i></i></div>
+          <div class="mk-table">
+            <i class="mk-row"><s style="width:34%"></s><u style="background:var(--yellow-3)"></u><b></b></i>
+            <i class="mk-row"><s style="width:26%"></s><u style="background:var(--yellow-3)"></u><b></b></i>
+            <i class="mk-row"><s style="width:38%"></s><u style="background:var(--pale)"></u><b></b></i>
+            <i class="mk-row"><s style="width:30%"></s><u style="background:var(--mint-3)"></u><b></b></i>
+            <i class="mk-row"><s style="width:22%"></s><u style="background:var(--pale)"></u><b></b></i>
+            <i class="mk-row"><s style="width:33%"></s><u style="background:var(--mint-3)"></u><b></b></i>
+          </div>
+        </div>
+        <span class="mini-label ml-client">Espace client</span>
+        <span class="mini-label ml-cab">Espace cabinet</span>
+      </div>
+    </div>
+    <ul class="abc">
+      <li><span class="abc-l">A</span><p><strong>Couleurs.</strong> Sarcelle profond, menthe, menthe pâle, crème et jaune ; aucun logo ni marque d'éditeur : l'application s'appelle PBC List.</p></li>
+      <li><span class="abc-l">B</span><p><strong>Deux ambiances.</strong> Chaleureuse et rassurante côté client ; sobre et dense côté cabinet, pour traiter beaucoup de lignes vite.</p></li>
+      <li><span class="abc-l">C</span><p><strong>Identité du cabinet.</strong> Nom, logo et coordonnées du cabinet dans l'espace client, réglés dans « Paramètres du cabinet ».</p></li>
+    </ul>
+  </div>
+
+  <div class="intro-body">
+    <div class="ib-head"><h2 class="ib-title">Palette</h2><p class="ib-sub">Teintes de base et rôle de chacune. Les associations texte / fond utilisées respectent le niveau AA.</p></div>
+    <ul class="swatches">
+      <li class="sw"><span class="sw-chip" style="background:#003d3d;color:#fff">Aa</span><span class="sw-meta"><strong>Sarcelle profond</strong><code>#003d3d</code><span>Couleur principale : barre du cabinet, boutons, titres.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#00f872;color:#003d3d">Aa</span><span class="sw-meta"><strong>Menthe</strong><code>#00f872</code><span>Accent : progression, « terminé ». Toujours en fond, jamais en texte sur fond clair.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#d9efeb;color:#003d3d">Aa</span><span class="sw-meta"><strong>Menthe pâle</strong><code>#d9efeb</code><span>Surfaces douces : encadrés, pastilles, sélection.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#f8f4f1;color:#0f2b2b">Aa</span><span class="sw-meta"><strong>Crème</strong><code>#f8f4f1</code><span>Fond chaleureux de l'espace client.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#f3c628;color:#003d3d">Aa</span><span class="sw-meta"><strong>Jaune</strong><code>#f3c628</code><span>Attention : « À faire », « À valider », avertissement.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#b42318;color:#fff">Aa</span><span class="sw-meta"><strong>Rouge</strong><code>#b42318</code><span>Réservé aux erreurs.</span></span></li>
+      <li class="sw"><span class="sw-chip" style="background:#0f2b2b;color:#fff">Aa</span><span class="sw-meta"><strong>Encre</strong><code>#0f2b2b</code><span>Textes ; gris <code>#566a6b</code> pour les textes secondaires.</span></span></li>
+    </ul>
+    <p class="derived"><strong>Nuances dérivées</strong>
+      <span class="dchip"><i style="background:#002b2b"></i><code>#002b2b</code> survol</span>
+      <span class="dchip"><i style="background:#cbfde1"></i><code>#cbfde1</code> menthe claire</span>
+      <span class="dchip"><i style="background:#e9f5f2"></i><code>#e9f5f2</code> sélection</span>
+      <span class="dchip"><i style="background:#f0e8e0"></i><code>#f0e8e0</code> crème foncé</span>
+      <span class="dchip"><i style="background:#fcf0c4"></i><code>#fcf0c4</code> jaune clair</span>
+      <span class="dchip"><i style="background:#5e4c0e"></i><code>#5e4c0e</code> texte sur jaune</span>
+      <span class="dchip"><i style="background:#7c8e8d"></i><code>#7c8e8d</code> bord des champs</span>
+    </p>
+    <ul class="principles">
+      <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Contrastes AA vérifiés</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Un statut = un texte + une icône, jamais la couleur seule</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Montants alignés à droite, chiffres tabulaires</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Cibles tactiles d'au moins 44 px côté client</li>
+      <li><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Police système, aucune ressource externe</li>
+    </ul>
+
+    <div class="intro-grid">
+      <div class="icard">
+        <h3>Étiquettes de lot</h3>
+        <ul class="lot-legend">
+          <li><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 2</span><p>Tableau du cabinet : cases à cocher, « Tout cocher », barre d'actions groupées, recherche, filtres et tri des colonnes.</p></li>
+          <li><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 4</span><p>Confort du client : recherche, filtres (À faire / Terminé, Achats / Ventes), ordre de priorité, un clic pour tout un fournisseur, plusieurs fichiers déposés d'un coup.</p></li>
+          <li><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 5</span><p>L'assistant robot, aussi côté cabinet.</p></li>
+          <li><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 6</span><p>Le bouton « Analyser avec Claude » sur la page d'un dossier.</p></li>
+          <li><span class="lot1-pill">Sans étiquette</span><p>Lot 1 : le design lui-même.</p></li>
+        </ul>
+        <p class="legend-note"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Les pointillés entourent ce qui n'est pas encore validé : c'est montré pour vous aider à décider.</p>
+      </div>
+
+      <div class="icard">
+        <h3>Statuts : toujours un texte et une icône</h3>
+        <div class="st-group"><h4>Client — par fournisseur</h4><div class="st-row">
+          <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+          <span class="badge b-progress"><svg class="ico" aria-hidden="true"><use href="#i-half"/></svg>En cours</span>
+          <span class="badge b-done"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>Terminé</span>
+        </div></div>
+        <div class="st-group"><h4>Client — par virement</h4><div class="st-row">
+          <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+          <span class="badge b-deposit"><svg class="ico" aria-hidden="true"><use href="#i-file-check"/></svg>Déposé</span>
+          <span class="badge b-mail"><svg class="ico" aria-hidden="true"><use href="#i-mail-fwd"/></svg>Transféré par e-mail</span>
+          <span class="badge b-none"><svg class="ico" aria-hidden="true"><use href="#i-file-x"/></svg>Sans facture</span>
+        </div></div>
+        <div class="st-group"><h4>Cabinet — revue, synchro, sens</h4><div class="st-row">
+          <span class="badge badge--sm b-review"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>À valider</span>
+          <span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span>
+          <span class="badge badge--sm b-skip"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg>Non demandée</span>
+          <span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span>
+          <span class="src src-api"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>API (secours)</span>
+          <span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span>
+          <span class="badge badge--sm b-sell"><svg class="ico" aria-hidden="true"><use href="#i-down-left"/></svg>Vente</span>
+        </div></div>
+      </div>
+
+      <div class="icard">
+        <h3>Assistant (bouton robot)</h3>
+        <div class="as-demo">
+          <div class="as-panel" role="group" aria-label="Assistant PBC List">
+            <div class="as-head"><span class="as-ava"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></span><strong>Assistant PBC List</strong><button type="button" class="as-close" aria-label="Fermer l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div>
+            <div class="as-body">
+              <p class="as-msg">Bonjour ! Je peux vous guider : déposer une facture, l'envoyer par e-mail, ou indiquer qu'il n'y en a pas.</p>
+              <div class="as-sugg"><button type="button">Comment déposer une facture ?</button><button type="button">Je n'ai pas de facture</button></div>
+            </div>
+            <div class="as-input"><input type="text" aria-label="Votre question" placeholder="Écrivez votre question…"><button type="button" class="as-send" aria-label="Envoyer la question"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></button></div>
+          </div>
+          <div class="as-demo-robot"><span class="robot-tip">Besoin d'aide ?</span><button type="button" class="robot-btn" aria-label="Ouvrir l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></button></div>
+        </div>
+      </div>
+    </div>
+
+    <p class="intro-foot"><span class="monogram" aria-hidden="true">VC</span><span>« Votre cabinet » et le monogramme « VC » sont provisoires : ils seront remplacés par le nom, le logo et les coordonnées de votre cabinet.</span></p>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 1. Connexion client                                                  -->
+<!-- ================================================================= -->
+<section id="client-connexion" aria-labelledby="t-1">
+  <header class="caption">
+    <h2 id="t-1">Écran 1 — Connexion client</h2>
+    <span class="mood mood-client"><i></i>Ambiance client</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>Le client est accueilli par son cabinet (C). « Votre cabinet », le monogramme « VC » et les coordonnées sont provisoires : ils seront remplacés par les vôtres.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace client</span></span></div>
+    <div class="app-client login">
+      <div class="login-grid">
+        <div class="login-head">
+          <div class="firm-block"><span class="monogram monogram--lg" aria-hidden="true">VC</span><div><strong>Votre cabinet</strong></div></div>
+          <h3 class="login-title">Espace client</h3>
+          <p class="login-sub">Transmettez vos factures manquantes en quelques minutes</p>
+        </div>
+        <div class="login-card">
+          <form action="#" onsubmit="return false">
+            <div class="field"><label for="l-email">Adresse e-mail</label><input id="l-email" class="input is-focus" type="email" placeholder="prenom.nom@entreprise.fr" autocomplete="email"></div>
+            <div class="field"><label for="l-pass">Mot de passe</label><div class="input-wrap"><input id="l-pass" class="input" type="password" value="motdepasse2026" autocomplete="current-password"><button type="button" class="input-eye" aria-label="Afficher le mot de passe"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg></button></div></div>
+            <button type="button" class="btn btn-primary btn-lg btn-block">Se connecter<svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+            <p class="privacy"><svg class="ico" aria-hidden="true"><use href="#i-shield"/></svg>Vos documents sont stockés de façon privée et sécurisée.</p>
+          </form>
+        </div>
+        <div class="login-more">
+          <ul class="login-points">
+            <li><span class="lp-ico"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg></span>Déposez vos factures en PDF, JPG ou PNG</li>
+            <li><span class="lp-ico"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg></span>Ou transférez-les simplement par e-mail</li>
+            <li><span class="lp-ico"><svg class="ico" aria-hidden="true"><use href="#i-file-x"/></svg></span>Pas de facture ? Indiquez-le, tout simplement</li>
+          </ul>
+          <div class="login-contact">
+            <span>Une question ? <strong>Votre cabinet</strong> vous répond.</span>
+            <span class="cl"><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</a><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</a></span>
+          </div>
+        </div>
+      </div>
+      <footer class="login-foot">
+        <span class="pbc-sign"><svg class="logo" aria-hidden="true"><use href="#logo"/></svg>PBC List</span>
+        <a href="#" class="cab-link"><svg class="ico" aria-hidden="true"><use href="#i-briefcase"/></svg>Accès cabinet</a>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 2. Accueil client                                                    -->
+<!-- ================================================================= -->
+<section id="client-accueil" aria-labelledby="t-2">
+  <header class="caption">
+    <h2 id="t-2">Écran 2 — Accueil client</h2>
+    <span class="mood mood-client"><i></i>Ambiance client</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>Une seule action principale, « Je continue ». La zone en pointillés (Lot 4) montre la recherche, les filtres et l'ordre de priorité, pas encore validés.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace client</span></span></div>
+    <div class="app-client">
+      <header class="c-header">
+        <div class="firm"><span class="monogram" aria-hidden="true">VC</span><span class="firm-txt"><strong>Votre cabinet</strong><span>Espace client</span></span></div>
+        <div class="c-header-right">
+          <span class="c-contact"><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</a><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</a></span>
+          <a href="#" class="btn btn-ghost btn-sm"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg>Se déconnecter</a>
+        </div>
+      </header>
+      <div class="c-main">
+        <div class="c-hello">
+          <h3>Bonjour Camille,</h3>
+          <p>Voici les factures qui nous manquent encore pour Atelier Lumière. Vous pouvez vous arrêter à tout moment et reprendre plus tard.</p>
+        </div>
+
+        <div class="hero on-dark">
+          <p class="hero-eyebrow"><svg class="ico" aria-hidden="true"><use href="#i-calendar"/></svg>Exercice 2026</p>
+          <h4 class="hero-title">Il nous manque 18 factures, réparties chez 5 fournisseurs</h4>
+          <div class="hero-progress">
+            <div class="hp-row"><span class="hp-done"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>6 sur 18 transmises</span><span class="hp-left">12 restantes</span></div>
+            <div class="hp-bar" role="progressbar" aria-label="Factures transmises" aria-valuemin="0" aria-valuemax="18" aria-valuenow="6" aria-valuetext="6 sur 18 transmises"><span style="width:33.33%"></span></div>
+          </div>
+          <div class="hero-cta">
+            <a href="#" class="btn btn-mint btn-lg">Je continue<svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+            <p>Prochaine étape : <strong>Amazon</strong>, 2 factures à transmettre</p>
+          </div>
+        </div>
+
+        <div class="lot-zone">
+          <div class="lot-head"><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 4</span><span class="lot-head-note">Recherche, filtres et ordre de priorité</span></div>
+          <div class="ctools">
+            <label class="search"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sr">Rechercher</span><input type="search" placeholder="Rechercher un fournisseur ou un client"></label>
+            <button type="button" class="sortbtn"><svg class="ico" aria-hidden="true"><use href="#i-priority"/></svg><span>Ordre : <b>priorité</b> — montants élevés et virements anciens d'abord</span><svg class="ico" aria-hidden="true"><use href="#i-chev-down"/></svg></button>
+            <div class="chip-row">
+              <div class="chip-group" role="group" aria-label="Filtrer par état">
+                <button type="button" class="cchip" aria-pressed="true"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</button>
+                <button type="button" class="cchip" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>Terminé</button>
+              </div>
+              <span class="chip-sep" aria-hidden="true"></span>
+              <div class="chip-group" role="group" aria-label="Filtrer par rubrique">
+                <button type="button" class="cchip" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-bag"/></svg>Achats</button>
+                <button type="button" class="cchip" aria-pressed="false"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg>Ventes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <section class="rubric" aria-labelledby="r-achats">
+          <div class="rubric-head"><span class="rubric-ico"><svg class="ico" aria-hidden="true"><use href="#i-bag"/></svg></span><h4 id="r-achats">Achats — factures fournisseurs manquantes</h4><span class="rubric-meta">14 factures · 4 fournisseurs</span></div>
+          <ul class="cards">
+            <li><a class="scard" href="#">
+              <span class="avatar av-yellow" aria-hidden="true">AM</span>
+              <span class="scard-body"><span class="scard-name">Amazon</span><span class="scard-meta">4 virements · <span class="num">1 245,90 €</span></span><span class="scard-prog"><span class="mbar" aria-hidden="true"><i style="width:50%"></i></span>2 sur 4 transmises</span></span>
+              <span class="badge b-progress"><svg class="ico" aria-hidden="true"><use href="#i-half"/></svg>En cours</span>
+              <svg class="ico scard-chev" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </a></li>
+            <li><a class="scard" href="#">
+              <span class="avatar av-mint" aria-hidden="true">LM</span>
+              <span class="scard-body"><span class="scard-name">Leroy Merlin</span><span class="scard-meta">6 virements · <span class="num">687,35 €</span></span></span>
+              <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+              <svg class="ico scard-chev" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </a></li>
+            <li><a class="scard is-done" href="#">
+              <span class="avatar av-cream" aria-hidden="true">OR</span>
+              <span class="scard-body"><span class="scard-name">Orange</span><span class="scard-meta">3 virements · <span class="num">125,97 €</span></span></span>
+              <span class="badge b-done"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>Terminé</span>
+              <svg class="ico scard-chev" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </a></li>
+            <li><a class="scard is-done" href="#">
+              <span class="avatar av-pale" aria-hidden="true">OV</span>
+              <span class="scard-body"><span class="scard-name">OVHcloud</span><span class="scard-meta">1 virement · <span class="num">23,99 €</span></span></span>
+              <span class="badge b-done"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>Terminé</span>
+              <svg class="ico scard-chev" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </a></li>
+          </ul>
+        </section>
+
+        <section class="rubric" aria-labelledby="r-ventes">
+          <div class="rubric-head"><span class="rubric-ico"><svg class="ico" aria-hidden="true"><use href="#i-receipt"/></svg></span><h4 id="r-ventes">Ventes — factures clients manquantes</h4><span class="rubric-meta">4 factures · 1 client</span></div>
+          <ul class="cards">
+            <li><a class="scard" href="#">
+              <span class="avatar av-teal" aria-hidden="true">MR</span>
+              <span class="scard-body"><span class="scard-name">SARL Martin Rénovation</span><span class="scard-meta">4 virements · <span class="num">8 640,00 €</span></span></span>
+              <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+              <svg class="ico scard-chev" aria-hidden="true"><use href="#i-chev-right"/></svg>
+            </a></li>
+          </ul>
+        </section>
+      </div>
+      <footer class="c-foot">
+        <span>Une question ? Votre cabinet vous répond :</span>
+        <a href="#"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</a>
+        <span class="c-foot-sep" aria-hidden="true"></span>
+        <a href="#"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</a>
+      </footer>
+    </div>
+    <div class="robot">
+      <span class="robot-tip" role="tooltip">Besoin d'aide ?</span>
+      <button type="button" class="robot-btn" aria-label="Ouvrir l'assistant" aria-expanded="false"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></button>
+      <div class="assistant" hidden><div class="as-panel" role="dialog" aria-label="Assistant PBC List"><div class="as-head"><span class="as-ava"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></span><strong>Assistant PBC List</strong><button type="button" class="as-close" aria-label="Fermer l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div><div class="as-body"><p class="as-msg">Bonjour Camille ! Une question sur une facture ou une étape ? Je suis là pour vous aider.</p></div><div class="as-input"><input type="text" aria-label="Votre question" placeholder="Écrivez votre question…"><button type="button" class="as-send" aria-label="Envoyer la question"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></button></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 3. Fournisseur (pas à pas)                                           -->
+<!-- ================================================================= -->
+<section id="client-fournisseur" aria-labelledby="t-3">
+  <header class="caption">
+    <h2 id="t-3">Écran 3 — Un fournisseur, pas à pas</h2>
+    <span class="mood mood-client"><i></i>Ambiance client</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>Trois façons de répondre, en grandes cartes. Le choix « Je n'ai pas de facture » est montré déplié, avec l'avertissement validé. La sélection groupée et le dépôt de plusieurs fichiers sont en Lot 4.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace client</span></span></div>
+    <div class="app-client">
+      <header class="c-header">
+        <div class="firm"><span class="monogram" aria-hidden="true">VC</span><span class="firm-txt"><strong>Votre cabinet</strong><span>Espace client</span></span></div>
+        <div class="c-header-right">
+          <span class="c-contact"><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</a><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</a></span>
+          <a href="#" class="btn btn-ghost btn-sm"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg>Se déconnecter</a>
+        </div>
+      </header>
+      <div class="c-main c-main--narrow">
+        <div class="stepbar">
+          <a href="#" class="back"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg>Retour à la liste</a>
+          <div class="steps"><span class="steps-label">Fournisseur 1 sur 5</span><span class="steps-dots" aria-hidden="true"><i class="on"></i><i></i><i></i><i></i><i></i></span></div>
+        </div>
+
+        <div class="supplier-head">
+          <span class="avatar avatar--lg av-yellow" aria-hidden="true">AM</span>
+          <div><h3 class="supplier-title">Amazon — 4 virements sans facture</h3><p class="supplier-sub">Total <span class="num">1 245,90 €</span> · 2 factures déjà transmises</p></div>
+          <span class="badge b-progress"><svg class="ico" aria-hidden="true"><use href="#i-half"/></svg>En cours</span>
+        </div>
+
+        <div class="ccard">
+          <div class="transfers-head">
+            <span class="lot-inline"><label class="check-row"><input type="checkbox" checked>Tout sélectionner pour ce fournisseur</label><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 4</span></span>
+            <span class="sel-count">2 virements sélectionnés · <span class="num">587,50 €</span></span>
+          </div>
+          <ul class="tlist">
+            <li>
+              <span class="t-done" title="Déjà transmis"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg></span>
+              <span class="t-date num">14/01/2026</span>
+              <span class="t-label">CB AMZN MKTP FR 13/01</span>
+              <span class="t-amount num">389,90 €</span>
+              <span class="badge b-deposit"><svg class="ico" aria-hidden="true"><use href="#i-file-check"/></svg>Déposé</span>
+            </li>
+            <li class="is-sel">
+              <label class="t-check"><input type="checkbox" checked aria-label="Sélectionner le virement du 02/03/2026"></label>
+              <span class="t-date num">02/03/2026</span>
+              <span class="t-label">CB AMAZON PAYMENTS 01/03</span>
+              <span class="t-amount num">459,00 €</span>
+              <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+            </li>
+            <li>
+              <span class="t-done" title="Déjà transmis"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg></span>
+              <span class="t-date num">21/05/2026</span>
+              <span class="t-label">CB AMZN MKTP FR 20/05</span>
+              <span class="t-amount num">268,50 €</span>
+              <span class="badge b-mail"><svg class="ico" aria-hidden="true"><use href="#i-mail-fwd"/></svg>Transféré par e-mail</span>
+            </li>
+            <li class="is-sel">
+              <label class="t-check"><input type="checkbox" checked aria-label="Sélectionner le virement du 08/07/2026"></label>
+              <span class="t-date num">08/07/2026</span>
+              <span class="t-label">CB AMAZON.FR 07/07</span>
+              <span class="t-amount num">128,50 €</span>
+              <span class="badge b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span>
+            </li>
+          </ul>
+        </div>
+
+        <h4 class="choose-title">Pour ces 2 virements, comment souhaitez-vous procéder ?</h4>
+        <p class="choose-sub">Choisissez la solution la plus simple pour vous.</p>
+        <div class="choices">
+          <article class="choice">
+            <div class="choice-head">
+              <span class="choice-ico ci-mint"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg></span>
+              <div><h5>Je dépose mes factures</h5><p>Ajoutez les factures depuis votre ordinateur ou votre téléphone.</p></div>
+              <span class="choice-num">Choix 1</span>
+            </div>
+            <div class="choice-body">
+              <div class="dropzone">
+                <svg class="ico dz-ico" aria-hidden="true"><use href="#i-cloud-up"/></svg>
+                <p class="dz-title">Glissez vos factures ici</p>
+                <p class="dz-or">ou</p>
+                <button type="button" class="btn btn-ghost"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg>Choisir des fichiers</button>
+                <p class="dz-hint">Formats acceptés : <b>PDF, JPG ou PNG</b></p>
+                <p class="dz-multi"><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 4</span>Plusieurs fichiers d'un coup : toutes les factures Amazon en une fois.</p>
+              </div>
+            </div>
+          </article>
+
+          <article class="choice">
+            <div class="choice-head">
+              <span class="choice-ico ci-pale"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg></span>
+              <div><h5>Je les envoie par e-mail</h5><p>Transférez les e-mails qui contiennent vos factures à cette adresse :</p></div>
+              <span class="choice-num">Choix 2</span>
+            </div>
+            <div class="choice-body">
+              <div class="mailbox">
+                <code class="mail-addr">nom-du-dossier-XXXX<wbr>@suppliers.pennylane.com</code>
+                <button type="button" class="btn btn-ghost" data-copy="nom-du-dossier-XXXX@suppliers.pennylane.com"><svg class="ico" aria-hidden="true"><use href="#i-copy"/></svg><span class="lbl">Copier</span></button>
+              </div>
+              <p class="help"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Les factures envoyées à cette adresse arrivent directement dans votre dossier : rien d'autre à faire.</p>
+            </div>
+          </article>
+
+          <article class="choice is-open">
+            <div class="choice-head">
+              <span class="choice-ico ci-yellow"><svg class="ico" aria-hidden="true"><use href="#i-file-x"/></svg></span>
+              <div><h5>Je n'ai pas de facture</h5><p>Indiquez-le simplement ; un mot d'explication aide votre comptable.</p></div>
+              <span class="choice-num"><svg class="ico" aria-hidden="true"><use href="#i-chev-up"/></svg>Choix 3, ouvert</span>
+            </div>
+            <div class="choice-body">
+              <div class="field"><label for="nf-com">Votre commentaire (facultatif)</label><textarea id="nf-com" class="input" rows="3" placeholder="Par exemple : facture introuvable, achat personnel…"></textarea></div>
+              <div class="warning" role="note">
+                <svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>
+                <div>
+                  <p><strong>Attention : sans facture, cette dépense risque de :</strong></p>
+                  <ul>
+                    <li>– ne pas être déduite de votre résultat, car une charge doit être appuyée de justificatifs suffisants (BOI-BIC-CHG-10) ;</li>
+                    <li>– vous faire perdre la TVA récupérable, car la TVA n'est déductible que si elle figure sur une facture (CGI art. 271, II ; BOI-TVA-DED-40-10-10 § 30) ;</li>
+                    <li>– être reclassée s'il s'agit d'une dépense personnelle : elle ne sera alors pas prise en charge par l'entreprise.</li>
+                  </ul>
+                  <p>Vous pouvez souvent obtenir un duplicata auprès du fournisseur. Votre comptable reviendra vers vous si besoin.</p>
+                </div>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="wizard-nav">
+          <a href="#" class="btn btn-ghost btn-lg"><svg class="ico" aria-hidden="true"><use href="#i-arrow-left"/></svg>Précédent</a>
+          <a href="#" class="btn btn-primary btn-lg">Suivant<svg class="ico" aria-hidden="true"><use href="#i-arrow-right"/></svg></a>
+        </div>
+      </div>
+      <footer class="c-foot">
+        <span>Une question ? Votre cabinet vous répond :</span>
+        <a href="#"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</a>
+        <span class="c-foot-sep" aria-hidden="true"></span>
+        <a href="#"><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</a>
+      </footer>
+    </div>
+    <div class="robot">
+      <span class="robot-tip" role="tooltip">Besoin d'aide ?</span>
+      <button type="button" class="robot-btn" aria-label="Ouvrir l'assistant" aria-expanded="false"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></button>
+      <div class="assistant" hidden><div class="as-panel" role="dialog" aria-label="Assistant PBC List"><div class="as-head"><span class="as-ava"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></span><strong>Assistant PBC List</strong><button type="button" class="as-close" aria-label="Fermer l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div><div class="as-body"><p class="as-msg">Besoin d'un coup de main pour Amazon ? Je peux vous expliquer chacune des trois solutions.</p></div><div class="as-input"><input type="text" aria-label="Votre question" placeholder="Écrivez votre question…"><button type="button" class="as-send" aria-label="Envoyer la question"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></button></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 4. Tableau de bord du cabinet                                        -->
+<!-- ================================================================= -->
+<section id="cabinet-tableau-de-bord" aria-labelledby="t-4">
+  <header class="caption">
+    <h2 id="t-4">Écran 4 — Tableau de bord du cabinet</h2>
+    <span class="mood mood-cab"><i></i>Ambiance cabinet</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>Barre sarcelle, chiffres clés, tableau compact. Une ligne signale l'adresse de collecte manquante, une autre la synchronisation de secours par API.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace cabinet</span></span></div>
+    <div class="app-cab">
+      <header class="topbar on-dark">
+        <a href="#" class="brand"><svg class="logo logo--mint" aria-hidden="true"><use href="#logo"/></svg><span><b>PBC List</b> · Espace cabinet</span></a>
+        <nav class="topnav" aria-label="Navigation du cabinet"><a href="#" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg>Dossiers clients</a><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg>Paramètres du cabinet</a></nav>
+        <div class="tb-user"><span class="avatar-sm" aria-hidden="true">J</span><span class="tb-name">Juju<small>Comptable</small></span><a href="#" class="btn-topbar"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg>Se déconnecter</a></div>
+      </header>
+      <div class="cab-main">
+        <div class="page-head">
+          <div><h3 class="page-title">Dossiers clients</h3><p class="page-sub">6 dossiers suivis · comptes surveillés : 401, 411, 471</p></div>
+          <a href="#nouveau-dossier" class="cbtn cbtn-primary"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Nouveau dossier</a>
+        </div>
+
+        <div class="tiles">
+          <div class="tile"><div class="tile-top"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg></span>Dossiers</div><div class="tile-val">6</div><div class="tile-sub">4 synchronisés aujourd'hui</div></div>
+          <div class="tile tile--attn"><div class="tile-top"><span class="tile-ico tile-ico--y"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg></span>Demandes à valider</div><div class="tile-val">23</div><div class="tile-sub">dans 4 dossiers</div></div>
+          <div class="tile"><div class="tile-top"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></span>Envoyées au client</div><div class="tile-val">47</div><div class="tile-sub">20 en attente de réponse</div></div>
+          <div class="tile"><div class="tile-top"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg></span>Reçues</div><div class="tile-val">27</div><div class="tile-sub">57 % des demandes envoyées</div></div>
+          <div class="tile"><div class="tile-top"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-euro"/></svg></span>Montant restant à justifier</div><div class="tile-val num">18 412,60 €</div><div class="tile-sub">tous dossiers confondus</div></div>
+        </div>
+
+        <div class="mcp">
+          <span class="mcp-ico"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg></span>
+          <div class="mcp-txt">
+            <p class="mcp-title">Pennylane (MCP)</p>
+            <p class="mcp-desc"><span class="mcp-ok"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>Connecté — la synchronisation passe par le MCP.</span><span>Comptes surveillés : 401, 411, 471</span></p>
+          </div>
+          <div class="mcp-actions">
+            <button type="button" class="cbtn cbtn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg>Reconnecter Pennylane (MCP)</button>
+            <button type="button" class="cbtn cbtn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg>Importer mes dossiers Pennylane</button>
+          </div>
+        </div>
+
+        <div class="lot-zone lot-zone--cab">
+          <div class="lot-head"><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 2</span><span class="lot-head-note">Recherche, filtres et tri des colonnes</span></div>
+          <div class="ctl">
+            <label class="csearch"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sr">Rechercher un dossier</span><input type="search" placeholder="Rechercher un dossier ou un company_id"></label>
+            <div class="chips" role="group" aria-label="Filtrer les dossiers">
+              <button type="button" class="chip" aria-pressed="true">Tous <span class="count">6</span></button>
+              <button type="button" class="chip chip-y" aria-pressed="false">Avec lignes à valider <span class="count">4</span></button>
+              <button type="button" class="chip" aria-pressed="false">Adresse manquante <span class="count">1</span></button>
+            </div>
+            <button type="button" class="csort"><svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg>Trier : <b>À valider</b>, du plus grand au plus petit<svg class="ico" aria-hidden="true"><use href="#i-chev-down"/></svg></button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="ctable">
+            <thead><tr>
+              <th scope="col"><span class="th-s">Dossier<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col">company_id</th>
+              <th scope="col" class="ta-r" aria-sort="descending"><span class="th-s is-sorted">À valider<svg class="ico" aria-hidden="true"><use href="#i-sort-down"/></svg></span></th>
+              <th scope="col" class="ta-r"><span class="th-s">Envoyées<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col" class="ta-r"><span class="th-s">Reçues<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col"><span class="th-s">Avancement<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col"><span class="th-s">Dernière synchro<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col"><span class="sr">Ouvrir</span></th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td><a href="#" class="dos-name">Boulangerie Les Tilleuls</a></td>
+                <td><code class="acct">4930215</code></td>
+                <td class="ta-r"><span class="cp cp-y">9</span></td>
+                <td class="ta-r num">6</td>
+                <td class="ta-r num">5</td>
+                <td><span class="prog"><span class="mbar" aria-hidden="true"><i style="width:83%"></i></span><span class="num">83 %</span></span></td>
+                <td><span class="sync"><span class="num">Aujourd'hui 08:40</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Boulangerie Les Tilleuls"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+              <tr>
+                <td><a href="#" class="dos-name">Atelier Lumière</a></td>
+                <td><code class="acct">4821937</code></td>
+                <td class="ta-r"><span class="cp cp-y">7</span></td>
+                <td class="ta-r num">18</td>
+                <td class="ta-r num">6</td>
+                <td><span class="prog"><span class="mbar" aria-hidden="true"><i style="width:33%"></i></span><span class="num">33 %</span></span></td>
+                <td><span class="sync"><span class="num">Aujourd'hui 08:42</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Atelier Lumière"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+              <tr>
+                <td><a href="#" class="dos-name">Studio Pixel &amp; Co</a></td>
+                <td><code class="acct">5236670</code></td>
+                <td class="ta-r"><span class="cp cp-y">4</span></td>
+                <td class="ta-r num">0</td>
+                <td class="ta-r num">0</td>
+                <td><span class="muted">Rien d'envoyé</span></td>
+                <td><span class="sync"><span class="num">25/10/2026 17:12</span><span class="src src-api"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>API (secours)</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Studio Pixel &amp; Co"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+              <tr>
+                <td><a href="#" class="dos-name">Les Jardins de Clara</a><span class="dos-warn"><svg class="ico" aria-hidden="true"><use href="#i-alert"/></svg>Adresse de collecte à renseigner</span></td>
+                <td><code class="acct">4477021</code></td>
+                <td class="ta-r"><span class="cp cp-y">3</span></td>
+                <td class="ta-r num">8</td>
+                <td class="ta-r num">2</td>
+                <td><span class="prog"><span class="mbar" aria-hidden="true"><i style="width:25%"></i></span><span class="num">25 %</span></span></td>
+                <td><span class="sync"><span class="num">Aujourd'hui 08:41</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Les Jardins de Clara"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+              <tr>
+                <td><a href="#" class="dos-name">Garage du Centre</a></td>
+                <td><code class="acct">5102284</code></td>
+                <td class="ta-r"><span class="cp cp-0">0</span></td>
+                <td class="ta-r num">11</td>
+                <td class="ta-r num">11</td>
+                <td><span class="prog"><span class="mbar" aria-hidden="true"><i style="width:100%"></i></span><span class="num">100 %</span></span></td>
+                <td><span class="sync"><span class="num">Hier 18:05</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Garage du Centre"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+              <tr>
+                <td><a href="#" class="dos-name">Transports Moreau</a></td>
+                <td><code class="acct">4719358</code></td>
+                <td class="ta-r"><span class="cp cp-0">0</span></td>
+                <td class="ta-r num">4</td>
+                <td class="ta-r num">3</td>
+                <td><span class="prog"><span class="mbar" aria-hidden="true"><i style="width:75%"></i></span><span class="num">75 %</span></span></td>
+                <td><span class="sync"><span class="num">Aujourd'hui 08:39</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span></span></td>
+                <td class="ta-r"><a href="#" class="row-open" aria-label="Ouvrir Transports Moreau"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <form class="newdos" id="nouveau-dossier" action="#" onsubmit="return false" aria-labelledby="nd-title">
+          <h4 id="nd-title"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg>Nouveau dossier</h4>
+          <div class="nd-fields">
+            <div class="cfield"><label for="nd-nom">Nom</label><input id="nd-nom" class="cinput" type="text" placeholder="Ex. : SAS Exemple"></div>
+            <div class="cfield"><label for="nd-id">company_id Pennylane</label><input id="nd-id" class="cinput mono" type="text" inputmode="numeric" placeholder="Ex. : 1234567"></div>
+            <div class="cfield"><label for="nd-adr">Adresse de collecte</label><input id="nd-adr" class="cinput mono" type="text" placeholder="nom-du-dossier-XXXX@suppliers.pennylane.com"></div>
+            <button type="button" class="cbtn cbtn-primary"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Créer le dossier</button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <div class="robot robot--cab">
+      <span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 5</span>
+      <span class="robot-tip" role="tooltip">Besoin d'aide ?</span>
+      <button type="button" class="robot-btn" aria-label="Ouvrir l'assistant" aria-expanded="false"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></button>
+      <div class="assistant" hidden><div class="as-panel" role="dialog" aria-label="Assistant PBC List"><div class="as-head"><span class="as-ava"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></span><strong>Assistant PBC List</strong><button type="button" class="as-close" aria-label="Fermer l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div><div class="as-body"><p class="as-msg">Bonjour Juju ! 23 lignes attendent votre validation, dont 9 chez Boulangerie Les Tilleuls.</p></div><div class="as-input"><input type="text" aria-label="Votre question" placeholder="Écrivez votre question…"><button type="button" class="as-send" aria-label="Envoyer la question"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></button></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 5. Dossier client : revue des lignes                                 -->
+<!-- ================================================================= -->
+<section id="cabinet-dossier" aria-labelledby="t-5">
+  <header class="caption">
+    <h2 id="t-5">Écran 5 — Dossier client : revue des lignes</h2>
+    <span class="mood mood-cab"><i></i>Ambiance cabinet</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>Chaque ligne est revue avant d'être envoyée au client. Trois lignes « À valider » sont cochées pour une action groupée (Lot 2) ; la colonne de cases est entourée de pointillés.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace cabinet</span></span></div>
+    <div class="app-cab">
+      <header class="topbar on-dark">
+        <a href="#" class="brand"><svg class="logo logo--mint" aria-hidden="true"><use href="#logo"/></svg><span><b>PBC List</b> · Espace cabinet</span></a>
+        <nav class="topnav" aria-label="Navigation du cabinet"><a href="#" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg>Dossiers clients</a><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg>Paramètres du cabinet</a></nav>
+        <div class="tb-user"><span class="avatar-sm" aria-hidden="true">J</span><span class="tb-name">Juju<small>Comptable</small></span><a href="#" class="btn-topbar"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg>Se déconnecter</a></div>
+      </header>
+      <div class="cab-main">
+        <nav class="crumbs" aria-label="Fil d'Ariane"><a href="#">Dossiers clients</a><span aria-hidden="true">›</span><span aria-current="page">Atelier Lumière</span></nav>
+        <div class="dos-head">
+          <div>
+            <h3 class="page-title">Atelier Lumière</h3>
+            <p class="dos-meta"><span class="kv">company_id <code>4821937</code></span><span class="kv"><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>Adresse de collecte <code>nom-du-dossier-XXXX@suppliers.pennylane.com</code></span></p>
+            <p class="dos-sync"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg><span>Dernière synchro : aujourd'hui à 08:42 · Source : MCP</span><span class="src src-mcp"><svg class="ico" aria-hidden="true"><use href="#i-plug"/></svg>MCP</span><span class="muted">· comptes 401, 411, 471</span></p>
+          </div>
+          <div class="dos-actions">
+            <button type="button" class="cbtn cbtn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-refresh"/></svg>Actualiser maintenant</button>
+            <span class="lot-inline"><button type="button" class="cbtn cbtn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-sparkles"/></svg>Analyser avec Claude</button><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 6</span></span>
+          </div>
+        </div>
+
+        <div class="dstats">
+          <div class="dstat"><span class="tile-ico tile-ico--y"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg></span><b>7</b><span>à valider</span></div>
+          <div class="dstat"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></span><b>18</b><span>envoyées au client</span></div>
+          <div class="dstat"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-inbox"/></svg></span><b>6</b><span>reçues</span></div>
+          <div class="dstat"><span class="tile-ico"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg></span><b>4</b><span>non demandées</span></div>
+        </div>
+
+        <div class="lot-zone lot-zone--cab">
+          <div class="lot-head"><span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 2</span><span class="lot-head-note">Filtres, recherche, cases à cocher, actions groupées et tri</span></div>
+          <div class="ctl">
+            <div class="chips" role="group" aria-label="Filtrer les lignes">
+              <button type="button" class="chip" aria-pressed="true">Toutes <span class="count">29</span></button>
+              <button type="button" class="chip chip-y" aria-pressed="false">À valider <span class="count">7</span></button>
+              <button type="button" class="chip" aria-pressed="false">Envoyées au client <span class="count">18</span></button>
+              <button type="button" class="chip" aria-pressed="false">Non demandées <span class="count">4</span></button>
+            </div>
+            <label class="csearch" style="margin-left:auto"><svg class="ico" aria-hidden="true"><use href="#i-search"/></svg><span class="sr">Rechercher une ligne</span><input type="search" placeholder="Libellé, tiers ou montant"></label>
+          </div>
+          <div class="bulk on-dark" role="region" aria-label="Actions groupées">
+            <span class="bulk-count"><svg class="ico" aria-hidden="true"><use href="#i-check-circle"/></svg>3 lignes sélectionnées</span>
+            <span class="bulk-sep" aria-hidden="true"></span>
+            <button type="button" class="cbtn cbtn-mint"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyer au client</button>
+            <button type="button" class="cbtn cbtn-onteal"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg>Ne pas demander</button>
+            <button type="button" class="bulk-cancel">Annuler la sélection</button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="ctable">
+            <thead><tr>
+              <th scope="col" class="sel"><label class="tc"><input type="checkbox" data-indeterminate>Tout cocher</label></th>
+              <th scope="col" aria-sort="descending"><span class="th-s is-sorted">Date<svg class="ico" aria-hidden="true"><use href="#i-sort-down"/></svg></span></th>
+              <th scope="col"><span class="th-s">Libellé bancaire<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col"><span class="th-s">Tiers<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col">Compte</th>
+              <th scope="col">Sens</th>
+              <th scope="col" class="ta-r"><span class="th-s">Montant<svg class="ico" aria-hidden="true"><use href="#i-sort"/></svg></span></th>
+              <th scope="col">Revue</th>
+              <th scope="col">Statut client</th>
+            </tr></thead>
+            <tbody>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 15/10/2026"></td>
+                <td class="num">15/10/2026</td>
+                <td><span class="lib" title="PRLV SEPA URSSAF IDF">PRLV SEPA URSSAF IDF</span></td>
+                <td>URSSAF</td>
+                <td><span class="acct">471</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">1 024,00 €</td>
+                <td><span class="revue"><span class="badge badge--sm b-skip"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg>Non demandée</span><button type="button" class="cbtn cbtn-xs cbtn-quiet"><svg class="ico" aria-hidden="true"><use href="#i-undo"/></svg>Réactiver</button></span></td>
+                <td class="muted">—</td>
+              </tr>
+              <tr class="is-sel is-hover">
+                <td class="sel"><input type="checkbox" checked aria-label="Sélectionner la ligne du 02/10/2026"></td>
+                <td class="num">02/10/2026</td>
+                <td><span class="lib" title="VIR SEPA HOTEL DU PARC">VIR SEPA HOTEL DU PARC</span></td>
+                <td>Hôtel du Parc</td>
+                <td><span class="acct">411</span></td>
+                <td><span class="badge badge--sm b-sell"><svg class="ico" aria-hidden="true"><use href="#i-down-left"/></svg>Vente</span></td>
+                <td class="ta-r num amount">1 380,00 €</td>
+                <td><span class="revue"><span class="badge badge--sm b-review"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>À valider</span><button type="button" class="cbtn cbtn-xs cbtn-line"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyer au client</button><span class="has-tip"><button type="button" class="cbtn cbtn-xs cbtn-icon cbtn-quiet" aria-label="Ne pas demander"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg></button><span class="tip" role="tooltip">Ne pas demander</span></span></span></td>
+                <td class="muted">—</td>
+              </tr>
+              <tr class="is-sel">
+                <td class="sel"><input type="checkbox" checked aria-label="Sélectionner la ligne du 24/09/2026"></td>
+                <td class="num">24/09/2026</td>
+                <td><span class="lib" title="PRLV SEPA ADOBE SYSTEMS">PRLV SEPA ADOBE SYSTEMS</span></td>
+                <td>Adobe</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">71,99 €</td>
+                <td><span class="revue"><span class="badge badge--sm b-review"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>À valider</span><button type="button" class="cbtn cbtn-xs cbtn-line"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyer au client</button><button type="button" class="cbtn cbtn-xs cbtn-icon cbtn-quiet" aria-label="Ne pas demander" title="Ne pas demander"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg></button></span></td>
+                <td class="muted">—</td>
+              </tr>
+              <tr class="is-sel">
+                <td class="sel"><input type="checkbox" checked aria-label="Sélectionner la ligne du 18/09/2026"></td>
+                <td class="num">18/09/2026</td>
+                <td><span class="lib" title="CB LE PRE VERT 17/09">CB LE PRE VERT 17/09</span></td>
+                <td><span class="tiers-unk">Tiers non identifié</span></td>
+                <td><span class="acct">471</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">86,40 €</td>
+                <td><span class="revue"><span class="badge badge--sm b-review"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>À valider</span><button type="button" class="cbtn cbtn-xs cbtn-line"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyer au client</button><button type="button" class="cbtn cbtn-xs cbtn-icon cbtn-quiet" aria-label="Ne pas demander" title="Ne pas demander"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg></button></span></td>
+                <td class="muted">—</td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 03/09/2026"></td>
+                <td class="num">03/09/2026</td>
+                <td><span class="lib" title="CB BUREAU VALLEE 02/09">CB BUREAU VALLEE 02/09</span></td>
+                <td>Bureau Vallée</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">54,60 €</td>
+                <td><span class="revue"><span class="badge badge--sm b-review"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg>À valider</span><button type="button" class="cbtn cbtn-xs cbtn-line"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyer au client</button><button type="button" class="cbtn cbtn-xs cbtn-icon cbtn-quiet" aria-label="Ne pas demander" title="Ne pas demander"><svg class="ico" aria-hidden="true"><use href="#i-ban"/></svg></button></span></td>
+                <td class="muted">—</td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 08/07/2026"></td>
+                <td class="num">08/07/2026</td>
+                <td><span class="lib" title="CB AMAZON.FR 07/07">CB AMAZON.FR 07/07</span></td>
+                <td>Amazon</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">128,50 €</td>
+                <td><span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span></td>
+                <td><span class="badge badge--sm b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span></td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 30/06/2026"></td>
+                <td class="num">30/06/2026</td>
+                <td><span class="lib" title="VIR SEPA SARL MARTIN RENOVATION">VIR SEPA SARL MARTIN RENOVATION</span></td>
+                <td>SARL Martin Rénovation</td>
+                <td><span class="acct">411</span></td>
+                <td><span class="badge badge--sm b-sell"><svg class="ico" aria-hidden="true"><use href="#i-down-left"/></svg>Vente</span></td>
+                <td class="ta-r num amount">2 160,00 €</td>
+                <td><span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span></td>
+                <td><span class="badge badge--sm b-todo"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg>À faire</span></td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 21/05/2026"></td>
+                <td class="num">21/05/2026</td>
+                <td><span class="lib" title="CB AMZN MKTP FR 20/05">CB AMZN MKTP FR 20/05</span></td>
+                <td>Amazon</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">268,50 €</td>
+                <td><span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span></td>
+                <td><span class="badge badge--sm b-mail"><svg class="ico" aria-hidden="true"><use href="#i-mail-fwd"/></svg>Transféré par e-mail</span></td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 06/05/2026"></td>
+                <td class="num">06/05/2026</td>
+                <td><span class="lib" title="PRLV SEPA OVHCLOUD">PRLV SEPA OVHCLOUD</span></td>
+                <td>OVHcloud</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">23,99 €</td>
+                <td><span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span></td>
+                <td><span class="badge badge--sm b-none"><svg class="ico" aria-hidden="true"><use href="#i-file-x"/></svg>Sans facture</span></td>
+              </tr>
+              <tr>
+                <td class="sel"><input type="checkbox" aria-label="Sélectionner la ligne du 05/05/2026"></td>
+                <td class="num">05/05/2026</td>
+                <td><span class="lib" title="PRLV SEPA ORANGE SA">PRLV SEPA ORANGE SA</span></td>
+                <td>Orange</td>
+                <td><span class="acct">401</span></td>
+                <td><span class="badge badge--sm b-buy"><svg class="ico" aria-hidden="true"><use href="#i-up-right"/></svg>Achat</span></td>
+                <td class="ta-r num amount">41,99 €</td>
+                <td><span class="badge badge--sm b-sent"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg>Envoyée au client</span></td>
+                <td><span class="badge badge--sm b-deposit"><svg class="ico" aria-hidden="true"><use href="#i-file-check"/></svg>Déposé</span></td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="table-foot"><span>10 lignes affichées sur 29</span><a href="#">Afficher les 19 suivantes</a></div>
+        </div>
+      </div>
+    </div>
+    <div class="robot robot--cab">
+      <span class="lot"><svg class="ico" aria-hidden="true"><use href="#i-flag"/></svg>Lot 5</span>
+      <span class="robot-tip" role="tooltip">Besoin d'aide ?</span>
+      <button type="button" class="robot-btn" aria-label="Ouvrir l'assistant" aria-expanded="false"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></button>
+      <div class="assistant" hidden><div class="as-panel" role="dialog" aria-label="Assistant PBC List"><div class="as-head"><span class="as-ava"><svg class="ico" aria-hidden="true"><use href="#i-robot"/></svg></span><strong>Assistant PBC List</strong><button type="button" class="as-close" aria-label="Fermer l'assistant"><svg class="ico" aria-hidden="true"><use href="#i-x"/></svg></button></div><div class="as-body"><p class="as-msg">Atelier Lumière : 7 lignes à valider et 12 réponses attendues du client.</p></div><div class="as-input"><input type="text" aria-label="Votre question" placeholder="Écrivez votre question…"><button type="button" class="as-send" aria-label="Envoyer la question"><svg class="ico" aria-hidden="true"><use href="#i-send"/></svg></button></div></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================================================================= -->
+<!-- 6. Paramètres du cabinet                                             -->
+<!-- ================================================================= -->
+<section id="cabinet-parametres" aria-labelledby="t-6">
+  <header class="caption">
+    <h2 id="t-6">Écran 6 — Paramètres du cabinet</h2>
+    <span class="mood mood-cab"><i></i>Ambiance cabinet</span>
+    <span class="tag-fict"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Maquette — données fictives</span>
+    <p>L'identité du cabinet (C) se règle ici, avec un aperçu en direct de l'en-tête vu par le client.</p>
+  </header>
+  <div class="frame">
+    <div class="frame-bar" aria-hidden="true"><span class="frame-dots"><i></i><i></i><i></i></span><span class="frame-addr"><span><svg class="ico"><use href="#i-lock"/></svg>PBC List — Espace cabinet</span></span></div>
+    <div class="app-cab">
+      <header class="topbar on-dark">
+        <a href="#" class="brand"><svg class="logo logo--mint" aria-hidden="true"><use href="#logo"/></svg><span><b>PBC List</b> · Espace cabinet</span></a>
+        <nav class="topnav" aria-label="Navigation du cabinet"><a href="#"><svg class="ico" aria-hidden="true"><use href="#i-folder"/></svg>Dossiers clients</a><a href="#" aria-current="page"><svg class="ico" aria-hidden="true"><use href="#i-sliders"/></svg>Paramètres du cabinet</a></nav>
+        <div class="tb-user"><span class="avatar-sm" aria-hidden="true">J</span><span class="tb-name">Juju<small>Comptable</small></span><a href="#" class="btn-topbar"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg>Se déconnecter</a></div>
+      </header>
+      <div class="cab-main" style="padding-bottom:28px">
+        <div class="page-head">
+          <div><h3 class="page-title">Paramètres du cabinet</h3><p class="page-sub">L'identité de votre cabinet, telle que vos clients la voient.</p></div>
+        </div>
+        <p class="prov"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>« Votre cabinet » et le monogramme « VC » sont provisoires : ils seront remplacés par le nom et le logo de votre cabinet.</p>
+        <div class="settings">
+          <form class="panel sform" action="#" onsubmit="return false" aria-labelledby="p-title">
+            <h4 class="panel-title" id="p-title">Identité du cabinet</h4>
+            <div class="cfield"><label for="p-nom">Nom du cabinet</label><input id="p-nom" class="cinput" type="text" value="Votre cabinet"></div>
+            <div class="cfield">
+              <span class="cflabel" id="p-logo">Logo</span>
+              <div class="logo-drop" role="group" aria-labelledby="p-logo">
+                <span class="monogram monogram--xl" aria-hidden="true">VC</span>
+                <div>
+                  <p><strong>Glissez votre logo ici</strong> ou choisissez un fichier.</p>
+                  <div class="ld-actions"><button type="button" class="cbtn cbtn-secondary"><svg class="ico" aria-hidden="true"><use href="#i-upload"/></svg>Choisir un fichier</button><button type="button" class="cbtn cbtn-quiet">Retirer</button></div>
+                  <p class="hint">PNG, JPG ou SVG, de préférence carré. Monogramme « VC » affiché en attendant.</p>
+                </div>
+              </div>
+            </div>
+            <div class="cfield-row">
+              <div class="cfield"><label for="p-mail">E-mail de contact</label><input id="p-mail" class="cinput" type="email" value="contact@votre-cabinet.example"></div>
+              <div class="cfield"><label for="p-tel">Téléphone</label><input id="p-tel" class="cinput" type="tel" value="01 99 00 12 34"></div>
+            </div>
+            <p class="snote"><svg class="ico" aria-hidden="true"><use href="#i-info"/></svg>Ces informations apparaissent dans l'espace client.</p>
+            <div class="form-foot"><small>Dernier enregistrement : 28/10/2026 à 09:15</small><button type="button" class="cbtn cbtn-primary"><svg class="ico" aria-hidden="true"><use href="#i-check"/></svg>Enregistrer</button></div>
+          </form>
+
+          <aside class="panel" aria-labelledby="pv-title">
+            <h4 class="panel-title" id="pv-title">Aperçu de l'espace client <span class="live"><i></i>En direct</span></h4>
+            <div class="preview-stage app-client" style="font-size:16px">
+              <div class="c-header">
+                <div class="firm"><span class="monogram" aria-hidden="true">VC</span><span class="firm-txt"><strong>Votre cabinet</strong><span>Espace client</span></span></div>
+                <span class="btn btn-ghost btn-sm" aria-hidden="true"><svg class="ico"><use href="#i-logout"/></svg>Se déconnecter</span>
+              </div>
+              <div class="pv-body">
+                <div class="pv-login">
+                  <span class="monogram monogram--lg" aria-hidden="true">VC</span>
+                  <strong>Votre cabinet</strong>
+                  <p class="pv-title">Espace client</p>
+                  <p>Transmettez vos factures manquantes en quelques minutes</p>
+                  <div class="pv-contact"><span><svg class="ico" aria-hidden="true"><use href="#i-mail"/></svg>contact@votre-cabinet.example</span><span><svg class="ico" aria-hidden="true"><use href="#i-phone"/></svg>01 99 00 12 34</span></div>
+                </div>
+              </div>
+            </div>
+            <p class="pv-hint">En-tête et page de connexion du client, mis à jour pendant la saisie.</p>
+          </aside>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+(function () {
+  document.querySelectorAll('[data-indeterminate]').forEach(function (el) { el.indeterminate = true; });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href="#"]');
+    if (a) { e.preventDefault(); }
+    var robot = e.target.closest('.robot-btn');
+    if (robot) {
+      var box = robot.parentNode.querySelector('.assistant');
+      if (box) { var open = box.hasAttribute('hidden'); if (open) { box.removeAttribute('hidden'); } else { box.setAttribute('hidden', ''); } robot.setAttribute('aria-expanded', open ? 'true' : 'false'); }
+    }
+    var close = e.target.closest('.assistant .as-close');
+    if (close) { var panel = close.closest('.assistant'); panel.setAttribute('hidden', ''); var b = panel.parentNode.querySelector('.robot-btn'); if (b) { b.setAttribute('aria-expanded', 'false'); } }
+    var copy = e.target.closest('[data-copy]');
+    if (copy) {
+      var lbl = copy.querySelector('.lbl');
+      var done = function () { if (lbl) { lbl.textContent = 'Copié'; setTimeout(function () { lbl.textContent = 'Copier'; }, 1600); } };
+      try { navigator.clipboard.writeText(copy.getAttribute('data-copy')).then(done, done); } catch (err) { done(); }
+    }
+  });
+})();
+</script>
+</body>
+</html>
