@@ -3,6 +3,7 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { CfWorkerJsonSchemaValidator } from "@modelcontextprotocol/sdk/validation/cfworker-provider.js";
+import { isDemoCompany, mcpCallAllowed, MCP_DEMO_ONLY_MSG } from "./demo-dossiers";
 
 export const MCP_URL = "https://mcp.pennylane.com/mcp";
 const AUTH_BASE = "https://mcp.pennylane.com/oauth";
@@ -214,6 +215,12 @@ async function connect(token: string) {
 }
 
 export class McpToolError extends Error {}
+// A dossier outside the hackathon demo list: the sync falls back to the API, like an unavailable MCP.
+export class McpNotDemo extends McpUnavailable {
+  constructor() {
+    super(MCP_DEMO_ONLY_MSG);
+  }
+}
 
 export async function openMcp(): Promise<McpSession> {
   let client: Client;
@@ -227,6 +234,8 @@ export async function openMcp(): Promise<McpSession> {
   const conversation_id = crypto.randomUUID();
   return {
     async call<T>(tool: string, args: Record<string, unknown>) {
+      // Single gate for the demo-only rule: nothing reaches Pennylane for another company.
+      if (!mcpCallAllowed(tool, args)) throw new McpNotDemo();
       const res = (await client.callTool({
         name: tool,
         arguments: { ...args, conversation_id, intent: "Synchronizing the company's unlettered bank payments for document collection." },
@@ -256,6 +265,7 @@ async function allPages<T>(s: McpSession, tool: string, args: Record<string, unk
 }
 
 export async function mcpFetch(companyId: string, since: string) {
+  if (!isDemoCompany(companyId)) throw new McpNotDemo();
   const s = await openMcp();
   try {
     const company_id = Number(companyId);
@@ -323,7 +333,8 @@ async function listCompaniesRaw(): Promise<McpCompany[]> {
         if (items.length < 100) break;
       }
     }
-    return [...map].map(([company_id, name]) => ({ company_id, name })).sort((a, b) => a.name.localeCompare(b.name));
+    // Demo-only rule: other companies of the account are never offered for import through the MCP.
+    return [...map].filter(([company_id]) => isDemoCompany(company_id)).map(([company_id, name]) => ({ company_id, name })).sort((a, b) => a.name.localeCompare(b.name));
   } finally {
     await s.close().catch(() => {});
   }

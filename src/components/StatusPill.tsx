@@ -60,8 +60,9 @@ export function ReviewPill({ state }: { state: string }) {
   return <Pill tone={s.tone} icon={s.icon}>{s.label}</Pill>;
 }
 
-// Where the last sync came from: the MCP, or the API used as a fallback.
+// Where the last sync came from: the MCP (demo dossiers only), the API as the normal source, or the API used as a fallback.
 export function SourcePill({ source }: { source: string }) {
-  const mcp = source === "MCP";
-  return <Pill tone={mcp ? "ok" : "todo"} icon={mcp ? Plug : AlertTriangle}>{source}</Pill>;
+  if (source === "MCP") return <Pill tone="ok" icon={Plug}>{source}</Pill>;
+  if (source === "API") return <Pill tone="muted" icon={Plug}>{source}</Pill>;
+  return <Pill tone="todo" icon={AlertTriangle}>{source}</Pill>;
 }

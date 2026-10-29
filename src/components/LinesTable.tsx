@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  ArrowDownLeft, ArrowUpRight, Ban, CheckCircle2, ChevronDown, Download, Eye, Inbox, Pencil, RotateCcw, Search, Send, ListFilter, X,
+  ArrowDownLeft, ArrowUpRight, Ban, CheckCircle2, ChevronDown, Download, Eye, Inbox, Pencil, RotateCcw, Search, Send, ListFilter, Sparkles, X,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -31,9 +31,10 @@ const supplierLabel = (name: string) => (name === "Autre" ? "Tiers non identifi�
 const plural = (n: number, word: string) => `${n} ${word}${n > 1 ? "s" : ""}`;
 
 // All the open lines of a dossier in one table: review, bulk actions, search, filters and sorting.
-export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
+export function LinesTable({ txs, uploads, onChanged, onRename, onDownload, onSaisie }: {
   txs: Tx[]; uploads: Upload[]; onChanged: () => void;
   onRename: (detected: string, current: string) => Promise<string | null>; onDownload: (path: string) => void;
+  onSaisie?: (uploadId: string) => void;
 }) {
   const [tab, setTab] = useState<Tab>(() => (txs.some((t) => t.review_state === "pending") ? "pending" : "all"));
   const [query, setQuery] = useState("");
@@ -211,10 +212,18 @@ export function LinesTable({ txs, uploads, onChanged, onRename, onDownload }: {
                     <div className="truncate font-mono" title={t.label}>{t.label}</div>
                     {t.comment && <div className="mt-1 text-xs italic text-muted-foreground">« {t.comment} »</div>}
                     {files.map((u) => (
-                      <button key={u.id} type="button" onClick={() => onDownload(u.storage_path)}
-                        className="mt-1 flex min-h-6 max-w-full items-center gap-1 py-1 text-xs font-semibold text-primary hover:underline">
-                        <Download className="h-3 w-3 shrink-0" /> <span className="truncate">{u.file_name}</span>
-                      </button>
+                      <div key={u.id} className="flex max-w-full items-center gap-2">
+                        <button type="button" onClick={() => onDownload(u.storage_path)}
+                          className="mt-1 flex min-h-6 min-w-0 items-center gap-1 py-1 text-xs font-semibold text-primary hover:underline">
+                          <Download className="h-3 w-3 shrink-0" /> <span className="truncate">{u.file_name}</span>
+                        </button>
+                        {onSaisie && t.direction === "out" && (
+                          <button type="button" onClick={() => onSaisie(u.id)} title="Faire saisir cette facture par Claude"
+                            className="mt-1 flex min-h-6 shrink-0 items-center gap-1 rounded-full bg-pale-2 px-2 py-0.5 text-xs font-semibold text-primary hover:underline">
+                            <Sparkles className="h-3 w-3" /> Saisie augmentée
+                          </button>
+                        )}
+                      </div>
                     ))}
                   </td>
                   <td className="px-3 py-2.5">
