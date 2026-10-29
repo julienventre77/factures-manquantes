@@ -21,10 +21,16 @@ import { cn } from "@/lib/utils";
 import { useClientDossier, useClientTxs } from "./espace.index";
 
 export const NO_INVOICE_WARNING = `Attention : sans facture, cette dépense risque de :
-– ne pas être déduite de votre résultat, car une charge doit être appuyée de justificatifs suffisants (BOI-BIC-CHG-10) ;
-– vous faire perdre la TVA récupérable, car la TVA n'est déductible que si elle figure sur une facture (CGI art. 271, II ; BOI-TVA-DED-40-10-10 § 30) ;
+– ne pas être déduite de votre résultat, car une charge doit être appuyée de justificatifs suffisants (BOI-BIC-CHG-10-20-20 § 1 et 10) ;
+– vous faire perdre la TVA récupérable, car la TVA n'est déductible que si elle figure sur une facture (CGI art. 271, II-2 ; BOI-TVA-DED-40-10-10 § 30) ;
 – être reclassée s'il s'agit d'une dépense personnelle : elle ne sera alors pas prise en charge par l'entreprise.
 Vous pouvez souvent obtenir un duplicata auprès du fournisseur. Votre comptable reviendra vers vous si besoin.`;
+
+// For a sale, the missing document is the client's own invoice: guidance only, no tax rule.
+export const NO_INVOICE_NOTE_SALE = `À savoir : pour un encaissement, la pièce attendue est la facture (ou le justificatif de vente) que vous avez établie pour votre client.
+– Si vous l'avez émise, vous la retrouverez dans votre logiciel de facturation ou dans vos e-mails envoyés : vous pouvez la déposer ou la transférer.
+– S'il ne s'agit pas d'une vente (apport, prêt, virement entre vos comptes, remboursement d'un fournisseur…), précisez-le dans le commentaire.
+Votre comptable reviendra vers vous si besoin.`;
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";
 
@@ -90,8 +96,11 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
       return n;
     });
 
+  const NOTHING_SELECTED = "Sélectionnez au moins une ligne.";
+
   async function uploadFiles(files: File[], targets: Tx[]) {
-    if (files.length === 0 || targets.length === 0) return;
+    if (files.length === 0) return;
+    if (targets.length === 0) { toast.error(NOTHING_SELECTED); return; }
     const bad = files.find((f) => !ACCEPT.split(",").includes(f.type));
     if (bad) { toast.error(`« ${bad.name} » n'est pas un PDF, JPG ou PNG.`); return; }
     setBusy(true);
@@ -122,7 +131,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
 
   async function markEmail() {
     const ids = selected.map((t) => t.id);
-    if (!ids.length) return;
+    if (!ids.length) { toast.error(NOTHING_SELECTED); return; }
     setBusy(true);
     const { error } = await supabase.from("transactions").update({ status: "email" }).in("id", ids);
     setBusy(false);
@@ -133,7 +142,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
 
   async function markNoInvoice() {
     const ids = selected.map((t) => t.id);
-    if (!ids.length) return;
+    if (!ids.length) { toast.error(NOTHING_SELECTED); return; }
     setBusy(true);
     const { error } = await supabase.from("transactions").update({ status: "sans_facture", comment: comment.trim() || null }).in("id", ids);
     setBusy(false);
@@ -167,7 +176,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
           <div className="flex items-center gap-3 text-sm font-semibold text-primary">
             Étape {idx + 1} sur {steps.length}
             {steps.length <= 12 && (
-              <span aria-hidden className="flex gap-1">
+              <span aria-hidden className="hidden gap-1 sm:flex">
                 {steps.map((g, i) => (
                   <span key={g.key} className={cn("h-1.5 w-6 rounded-full", i === idx ? "bg-primary" : g.state === "done" ? "bg-primary/40" : "bg-cream-3")} />
                 ))}
@@ -239,7 +248,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
                   : `Pour ces ${selected.length} ${noun}s, comment souhaitez-vous procéder ?`}
             </h2>
             <p className="mt-1 text-muted-foreground">Choisissez la solution la plus simple pour vous.</p>
-            <div className={cn("mt-5 space-y-4", selected.length === 0 && "pointer-events-none opacity-50")}>
+            <div inert={selected.length === 0} className={cn("mt-5 space-y-4", selected.length === 0 && "opacity-50")}>
               <ChoiceCard n={1} icon={Upload} tone="mint" open={mode === "upload"} onToggle={() => setMode(mode === "upload" ? null : "upload")}
                 title="Je dépose mes factures" desc="Ajoutez les factures depuis votre ordinateur ou votre téléphone.">
                 <DropZone busy={busy} several={selected.length > 1} noun={noun} onFiles={(f) => uploadFiles(f, selected)} />
@@ -282,8 +291,9 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
                 title="Je n'ai pas de facture" desc="Indiquez-le simplement ; un mot d'explication aide votre comptable.">
                 <label htmlFor="no-invoice-comment" className="text-sm font-semibold">Votre commentaire (facultatif)</label>
                 <Textarea id="no-invoice-comment" rows={3} value={comment} onChange={(e) => setComment(e.target.value)}
-                  placeholder="Par exemple : facture introuvable, achat personnel…" className="mt-2 bg-card md:text-base" />
-                <NoInvoiceWarning />
+                  placeholder={isSale ? "Par exemple : apport, virement entre mes comptes…" : "Par exemple : facture introuvable, achat personnel…"}
+                  className="mt-2 bg-card md:text-base" />
+                <NoInvoiceWarning text={isSale ? NO_INVOICE_NOTE_SALE : NO_INVOICE_WARNING} />
                 <Button size="xl" className="mt-5" disabled={busy} onClick={markNoInvoice}>
                   Je confirme : pas de facture pour {selected.length > 1 ? `ces ${selected.length} ${noun}s` : `ce ${noun}`}
                 </Button>
@@ -397,8 +407,8 @@ function DropZone({ busy, several, noun, onFiles }: { busy: boolean; several: bo
   );
 }
 
-function NoInvoiceWarning() {
-  const [title, ...lines] = NO_INVOICE_WARNING.split("\n");
+function NoInvoiceWarning({ text }: { text: string }) {
+  const [title, ...lines] = text.split("\n");
   return (
     <div role="note" className="mt-4 flex gap-3 rounded-xl border border-yellow/60 bg-yellow-soft/60 p-4 text-sm text-yellow-ink">
       <AlertTriangle aria-hidden className="mt-0.5 h-5 w-5 shrink-0" />

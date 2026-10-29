@@ -73,7 +73,7 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
   return (
     <header className="bg-primary text-primary-foreground">
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4">
-        <Link to="/cabinet" className="flex items-center gap-2.5 py-3">
+        <Link to="/cabinet" className="flex items-center gap-2.5 rounded-sm py-3 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint">
           <BrandMark tone="mint" />
           <span className="font-bold">
             PBC List <span className="hidden font-normal text-primary-foreground/80 sm:inline">· Espace cabinet</span>
@@ -95,14 +95,14 @@ function CabinetBar({ onSignOut }: { onSignOut: () => void }) {
               </span>
             </div>
           )}
-          <Link to="/cabinet/parametres" aria-label="Paramètres du cabinet" className="rounded-md p-2 hover:bg-primary-foreground/10 sm:hidden">
+          <Link to="/cabinet/parametres" aria-label="Paramètres du cabinet" className="rounded-md p-2 hover:bg-primary-foreground/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-mint sm:hidden">
             <Settings className="h-5 w-5" />
           </Link>
           <Button
             variant="outline"
             onClick={onSignOut}
             aria-label="Se déconnecter"
-            className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+            className="border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground focus-visible:ring-mint focus-visible:ring-offset-primary"
           >
             <LogOut /> <span className="hidden sm:inline">Se déconnecter</span>
           </Button>
@@ -118,7 +118,7 @@ function NavTab({ to, active, children }: { to: "/cabinet" | "/cabinet/parametre
       to={to}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-2 border-b-[3px] px-3 text-sm font-semibold hover:text-primary-foreground",
+        "flex items-center gap-2 border-b-[3px] px-3 text-sm font-semibold hover:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-mint",
         active ? "border-mint text-primary-foreground" : "border-transparent text-primary-foreground/80",
       )}
     >

@@ -113,7 +113,9 @@ function Espace() {
             <h1 className="text-2xl sm:text-3xl">Bonjour,</h1>
             <p className="mt-2 max-w-2xl text-muted-foreground">
               {remaining === 0
-                ? "Merci pour vos réponses."
+                ? all.length === 0
+                  ? "Aucune facture ne vous est demandée pour le moment."
+                  : "Merci pour vos réponses."
                 : `Voici les factures qui nous manquent encore${dossier.data?.name ? ` pour ${dossier.data.name}` : ""}. Vous pouvez vous arrêter à tout moment et reprendre plus tard : tout est enregistré au fur et à mesure.`}
             </p>
 
@@ -179,7 +181,7 @@ function Espace() {
             {steps.length > 0 && (
               <div className="mt-8 space-y-3">
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <label className="relative flex-1">
+                  <label className="relative flex-1 sm:min-w-[16rem]">
                     <span className="sr-only">Rechercher</span>
                     <Search aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                     <input
@@ -190,7 +192,7 @@ function Espace() {
                       className="h-12 w-full rounded-xl border border-input bg-card pl-11 pr-3 placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     />
                   </label>
-                  <label className="relative">
+                  <label className="relative sm:shrink-0">
                     <span className="sr-only">Ordre d'affichage</span>
                     <ArrowDownWideNarrow aria-hidden className="pointer-events-none absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
                     <select
@@ -198,8 +200,8 @@ function Espace() {
                       onChange={(e) => setOrder(e.target.value as "priority" | "name")}
                       className="h-12 w-full appearance-none rounded-xl border border-input bg-card pl-11 pr-10 font-semibold text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <option value="priority">Priorité : gros montants et paiements anciens d'abord</option>
-                      <option value="name">Ordre alphabétique</option>
+                      <option value="priority">Par priorité</option>
+                      <option value="name">Par ordre alphabétique</option>
                     </select>
                     <ChevronDown aria-hidden className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-primary" />
                   </label>
