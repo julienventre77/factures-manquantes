@@ -442,6 +442,8 @@ export type Database = {
           decided_at: string | null
           decided_by: string | null
           dossier_id: string
+          envoye_le: string | null
+          envoye_par: string | null
           fournisseur: string
           id: string
           lecture: Json | null
@@ -451,6 +453,7 @@ export type Database = {
           lu_par: string | null
           model: string | null
           numero: string | null
+          pennylane_invoice_id: string | null
           state: string
           tiers: string
           total_ht: number
@@ -466,6 +469,8 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           dossier_id: string
+          envoye_le?: string | null
+          envoye_par?: string | null
           fournisseur: string
           id?: string
           lecture?: Json | null
@@ -475,6 +480,7 @@ export type Database = {
           lu_par?: string | null
           model?: string | null
           numero?: string | null
+          pennylane_invoice_id?: string | null
           state?: string
           tiers: string
           total_ht?: number
@@ -490,6 +496,8 @@ export type Database = {
           decided_at?: string | null
           decided_by?: string | null
           dossier_id?: string
+          envoye_le?: string | null
+          envoye_par?: string | null
           fournisseur?: string
           id?: string
           lecture?: Json | null
@@ -499,6 +507,7 @@ export type Database = {
           lu_par?: string | null
           model?: string | null
           numero?: string | null
+          pennylane_invoice_id?: string | null
           state?: string
           tiers?: string
           total_ht?: number
