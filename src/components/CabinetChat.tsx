@@ -62,7 +62,7 @@ export function CabinetChat({ dossierId }: { dossierId: string | null }) {
         taRef={taRef}
         privacyNote={
           dossierId
-            ? "Vos questions et les données du dossier (nom, adresses de collecte, lignes : dates, montants, tiers, libellés sans IBAN, commentaires du client) sont traitées par un service d'intelligence artificielle (Anthropic). Vérifiez toujours ses réponses."
+            ? "Vos questions et les données du dossier (nom, adresses de collecte, lignes : dates, montants, tiers, libellés sans IBAN) sont traitées par un service d'intelligence artificielle (Anthropic). Vérifiez toujours ses réponses."
             : "Vos questions et la liste de vos dossiers (noms des clients et compteurs) sont traitées par un service d'intelligence artificielle (Anthropic). Vérifiez toujours ses réponses."
         }
       />

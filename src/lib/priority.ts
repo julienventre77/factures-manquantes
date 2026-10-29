@@ -10,7 +10,8 @@ export function prioritize(groups: SupplierGroup[]): SupplierGroup[] {
       const todo = g.txs.filter((t) => t.status === "a_faire");
       return [g.key, {
         done: todo.length === 0,
-        amount: todo.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+        // In cents, as in stepOrder: sums of the same amounts can differ by a hair.
+        amount: Math.round(todo.reduce((s, t) => s + Math.abs(Number(t.amount)), 0) * 100),
         oldest: todo.reduce((d, t) => (t.date < d ? t.date : d), "9999-12-31"),
       }] as const;
     }),
@@ -29,7 +30,8 @@ export function prioritize(groups: SupplierGroup[]): SupplierGroup[] {
 // so it uses each group's whole amount and oldest payment, not what is left to do.
 export function stepOrder(groups: SupplierGroup[]): SupplierGroup[] {
   const oldest = (g: SupplierGroup) => g.txs.reduce((d, t) => (t.date < d ? t.date : d), "9999-12-31");
-  return [...groups].sort((a, b) => b.total - a.total || oldest(a).localeCompare(oldest(b)) || a.name.localeCompare(b.name, "fr"));
+  const cents = (g: SupplierGroup) => Math.round(g.total * 100);
+  return [...groups].sort((a, b) => cents(b) - cents(a) || oldest(a).localeCompare(oldest(b)) || a.name.localeCompare(b.name, "fr"));
 }
 
 // Case, accents and spaces are ignored; "389.90" and "389,90" are the same amount.

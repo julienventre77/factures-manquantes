@@ -29,6 +29,13 @@ describe("prioritize", () => {
     const old = group("Ancien", [tx({ amount: -20, date: "2026-01-15" })]);
     expect(prioritize([recent, old]).map((g) => g.name)).toEqual(["Ancien", "Récent"]);
   });
+  it("agrees with stepOrder on totals equal to the cent, so the next step is the first one", () => {
+    const adobe = group("Adobe", [tx({ amount: -10.1, date: "2026-01-05" }), tx({ amount: -20.2, date: "2026-01-05" })]);
+    const bureau = group("Bureau Vallée", [tx({ amount: -30.3, date: "2026-04-01" })]);
+    expect(adobe.total).not.toBe(bureau.total);
+    expect(prioritize([bureau, adobe]).map((g) => g.name)).toEqual(["Adobe", "Bureau Vallée"]);
+    expect(stepOrder([bureau, adobe]).map((g) => g.name)).toEqual(["Adobe", "Bureau Vallée"]);
+  });
 });
 
 describe("stepOrder", () => {
@@ -40,6 +47,12 @@ describe("stepOrder", () => {
     const aDone = group("A", [tx({ amount: -1000, status: "depose" })]);
     expect(before).toEqual(["A", "B", "C"]);
     expect(stepOrder([c, aDone, b]).map((g) => g.name)).toEqual(before);
+  });
+  it("treats totals equal to the cent as a tie, whatever the order of the lines", () => {
+    const amazon = group("Amazon", [tx({ amount: -36.41, date: "2026-01-02" }), tx({ amount: -2.58, date: "2026-01-02" }), tx({ amount: -1.01, date: "2026-01-02" })]);
+    const boulanger = group("Boulanger", [tx({ amount: -40, date: "2026-03-05" })]);
+    expect(amazon.total).not.toBe(40);
+    expect(stepOrder([boulanger, amazon]).map((g) => g.name)).toEqual(["Amazon", "Boulanger"]);
   });
   it("breaks ties with the oldest payment, then the name", () => {
     const recent = group("Récent", [tx({ amount: -20, date: "2026-05-01" })]);
