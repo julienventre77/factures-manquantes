@@ -33,9 +33,12 @@ const ALNUM = /[A-Z0-9]/i;
 // Where the French RIB layout puts its spaces: after the check digits, the bank, the branch and the account.
 const RIB_GAPS = [4, 9, 14, 25];
 
-// Valid IBANs, in any case, even glued to the previous word: in one block, by groups of 4 or in the
-// French RIB layout, with spaces, dashes or dots. Each start is read on its own, so a false start
-// just before an IBAN cannot hide it.
+// IBANs read at their country's exact length, in any case, even glued to the previous word, with single
+// spaces, dashes or dots. Each start is read on its own, so a false start just before an IBAN cannot hide it.
+// Masked: a valid IBAN in one block, by groups of 4 or in the French RIB layout, even glued to the next
+// word; a valid IBAN with other spacing (national layouts, typing slips) that ends a word and holds no
+// word of letters, except a bank code of up to 4 letters after the check digits (GB29 NWBK 601613…);
+// and a mistyped IBAN printed by groups of 4 that ends a word, with at least 8 digits after the check digits.
 function ibanSpans(s: string): Span[] {
   const spans: Span[] = [];
   for (const m of s.matchAll(COUNTRY_AND_KEY)) {
@@ -51,35 +54,53 @@ function ibanSpans(s: string): Span[] {
       else break;
       i++;
     }
+    if (iban.length < length) continue;
+    const endsWord = !ALNUM.test(s[i] ?? "");
     const layout = gaps.every((g) => g % 4 === 0) || gaps.every((g) => RIB_GAPS.includes(g));
-    if (iban.length === length && layout && validIban(iban)) spans.push([m.index, i]);
+    const bounds = [0, ...gaps, length];
+    const words = bounds.slice(1).map((to, k) => iban.slice(bounds[k], to));
+    const noWord = words.every((w, k) => !/^[A-Z]+$/.test(w) || (k === 1 && w.length <= 4));
+    const byFours =
+      gaps.length === Math.ceil(length / 4) - 1 && gaps.every((g, k) => g === 4 * (k + 1));
+    const digits = iban.slice(4).match(/\d/g)?.length ?? 0;
+    if (validIban(iban) ? layout || (endsWord && noWord) : byFours && endsWord && digits >= 8)
+      spans.push([m.index, i]);
   }
   return spans;
 }
 
-// IBANs that fail the check (cut or mistyped), at the start of a word and in the same layouts.
-// After the first group (which may be a bank code, such as NWBK), each group holds a digit.
-// A run is masked when at least 8 digits follow its country code and check digits.
+// IBANs that fail the check (cut or mistyped), not right after a digit: in one block, by groups of 4
+// or in the French RIB layout. After the first group (which may be a bank code, such as NWBK), each
+// group holds a digit.
 const IBAN_LIKE = new RegExp(
-  "(?<![A-Z0-9])[A-Z]{2}\\d{2}(?:" +
+  "(?<![0-9])[A-Z]{2}\\d{2}(?:" +
     "[A-Z0-9]{11,30}" +
     "|[ .-]\\d{5}[ .-]\\d{5}(?:[ .-](?=[A-Z]*\\d)[A-Z0-9]{1,11}(?:[ .-]\\d{2})?)?" +
     "|[ .-][A-Z0-9]{4}(?:[ .-](?=[A-Z]{0,3}\\d)[A-Z0-9]{4}){1,6}(?:[ .-](?=[A-Z]{0,2}\\d)[A-Z0-9]{1,3})?" +
     ")(?![A-Z0-9])",
   "iy",
 );
+// A run is masked when at least 8 digits follow the check digits, or 7 after a bank code in letters
+// (an IBAN cut at 15 characters, such as NL91ABNA0417164). When its first two letters are no IBAN
+// country (mistyped, or an invoice or RF reference such as FA26-0012 1250), it must also be as long
+// as the shortest IBAN, 15 characters.
 function ibanLikeSpans(s: string): Span[] {
   const spans: Span[] = [];
   for (const m of s.matchAll(COUNTRY_AND_KEY)) {
     IBAN_LIKE.lastIndex = m.index;
     const run = IBAN_LIKE.exec(s)?.[0] ?? "";
-    if ((run.slice(4).match(/\d/g)?.length ?? 0) >= 8) spans.push([m.index, m.index + run.length]);
+    const rest = run.slice(4);
+    const digits = rest.match(/\d/g)?.length ?? 0;
+    const masked = IBAN_LENGTH[m[0].slice(0, 2).toUpperCase()]
+      ? digits >= 8 || (digits >= 7 && /^[ .-]?[A-Z]{4}/i.test(rest))
+      : digits >= 8 && run.replace(/[ .-]/g, "").length >= 15;
+    if (masked) spans.push([m.index, m.index + run.length]);
   }
   return spans;
 }
 
 // French RIB without its IBAN prefix: bank (5 digits), branch (5), account (11 characters), key (2).
-const RIB = /(?<![A-Z0-9])\d{5}[ .-]\d{5}[ .-](?=[A-Z]*\d)[A-Z0-9]{11}[ .-]\d{2}(?![A-Z0-9])/gi;
+const RIB = /(?<![0-9])\d{5}[ .-]\d{5}[ .-](?=[A-Z]*\d)[A-Z0-9]{11}[ .-]\d{2}(?![A-Z0-9])/gi;
 
 // Each span becomes one mask; spans that overlap or touch become a single one.
 function maskSpans(s: string, spans: Span[]): string {
