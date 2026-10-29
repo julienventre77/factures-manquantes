@@ -52,3 +52,17 @@ export function normalizeSupplier(label: string): string {
   if (tokens.length === 0) return "Autre";
   return titleCase(tokens.slice(0, 2).join(" "));
 }
+
+const LEGAL_FORMS = new Set(["SARL", "SAS", "SASU", "SA", "EURL", "SCI", "SNC", "EI", "EIRL", "SCP", "SELARL"]);
+const SMALL_WORDS = new Set(["DE", "DU", "DES", "LA", "LE", "LES", "ET", "D", "L"]);
+
+// Two-letter monogram shown in the avatar of a supplier or of the firm.
+// e.g. "Leroy Merlin" -> "LM", "Amazon" -> "AM", "SARL Martin Rénovation" -> "MR"
+export function initials(name: string): string {
+  const words = (name || "")
+    .split(/[\s'’\-_.&/]+/)
+    .filter((w) => w && !LEGAL_FORMS.has(w.toUpperCase()) && !SMALL_WORDS.has(w.toUpperCase()));
+  if (words.length === 0) return "?";
+  if (words.length === 1) return words[0]!.slice(0, 2).toUpperCase();
+  return (words[0]!.charAt(0) + words[1]!.charAt(0)).toUpperCase();
+}
