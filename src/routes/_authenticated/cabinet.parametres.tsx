@@ -2,13 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { ChevronRight, ImagePlus, Mail, Phone, Save, Trash2 } from "lucide-react";
+import { ChevronRight, ImagePlus, Mail, Phone, Save, Trash2, UserPlus, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { AppHeader } from "@/components/AppHeader";
 import { Monogram } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { createCabinetAccount, listCabinetAccounts } from "@/lib/admin.functions";
 import { DEFAULT_CABINET, LOGO_BUCKET, cabinetQuery, useCabinet } from "@/lib/cabinet";
 import { requireCabinet } from "@/lib/session";
 
@@ -181,6 +182,8 @@ function SettingsPage() {
             <Preview cabinet={preview} />
           </div>
         )}
+
+        <CabinetAccounts />
       </main>
     </div>
   );
@@ -215,6 +218,43 @@ function Preview({ cabinet }: { cabinet: { name: string; email: string; phone: s
           )}
         </div>
       </div>
+    </section>
+  );
+}
+
+// Cabinet accounts: list and creation with an initial password, typed here and passed on by the cabinet.
+function CabinetAccounts() {
+  const q = useQuery({ queryKey: ["cabinet-accounts"], queryFn: () => listCabinetAccounts() });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    try {
+      await createCabinetAccount({ data: { email, password } });
+      toast.success("Accès cabinet créé. Transmettez l'e-mail et le mot de passe à la personne concernée.");
+      setEmail(""); setPassword("");
+      await q.refetch();
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section id="comptes-cabinet" className="rounded-xl border bg-card p-5 shadow-sm">
+      <h2 className="flex items-center gap-2 text-lg"><Users className="h-5 w-5" /> Accès cabinet</h2>
+      <div className="mt-3">
+        {q.isError ? <p className="text-sm text-destructive">Liste indisponible.</p>
+          : !q.data ? <p className="text-sm text-muted-foreground">Chargement…</p>
+          : <ul className="space-y-1 text-sm">{q.data.map((m) => <li key={m} className="font-mono">{m}</li>)}</ul>}
+      </div>
+      <form onSubmit={add} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+        <Input type="email" required placeholder="E-mail du collaborateur" aria-label="E-mail du collaborateur" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <Input type="text" required minLength={8} placeholder="Mot de passe initial (8+)" aria-label="Mot de passe initial" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <Button type="submit" disabled={busy}><UserPlus /> Créer l'accès</Button>
+      </form>
     </section>
   );
 }
