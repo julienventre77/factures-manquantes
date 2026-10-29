@@ -61,8 +61,8 @@
     {
       "idx": 8,
       "version": "7",
-      "when": 1793229000000,
-      "tag": "0008_skip_rules_cabinet_settings",
+      "when": 1793245926213,
+      "tag": "0008_cabinet_chat_cascade",
       "breakpoints": true
     }
   ]
