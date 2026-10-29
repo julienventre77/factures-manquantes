@@ -78,6 +78,13 @@
       "when": 1793246293142,
       "tag": "0010_skip_rules_and_cabinet_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1793246342469,
+      "tag": "0011_skip_rules_cabinet_settings_align",
+      "breakpoints": true
     }
   ]
 }
