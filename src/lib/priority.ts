@@ -10,7 +10,8 @@ export function prioritize(groups: SupplierGroup[]): SupplierGroup[] {
       const todo = g.txs.filter((t) => t.status === "a_faire");
       return [g.key, {
         done: todo.length === 0,
-        amount: todo.reduce((s, t) => s + Math.abs(Number(t.amount)), 0),
+        // In cents, as in stepOrder: sums of the same amounts can differ by a hair.
+        amount: Math.round(todo.reduce((s, t) => s + Math.abs(Number(t.amount)), 0) * 100),
         oldest: todo.reduce((d, t) => (t.date < d ? t.date : d), "9999-12-31"),
       }] as const;
     }),

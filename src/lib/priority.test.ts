@@ -29,6 +29,13 @@ describe("prioritize", () => {
     const old = group("Ancien", [tx({ amount: -20, date: "2026-01-15" })]);
     expect(prioritize([recent, old]).map((g) => g.name)).toEqual(["Ancien", "Récent"]);
   });
+  it("agrees with stepOrder on totals equal to the cent, so the next step is the first one", () => {
+    const adobe = group("Adobe", [tx({ amount: -10.1, date: "2026-01-05" }), tx({ amount: -20.2, date: "2026-01-05" })]);
+    const bureau = group("Bureau Vallée", [tx({ amount: -30.3, date: "2026-04-01" })]);
+    expect(adobe.total).not.toBe(bureau.total);
+    expect(prioritize([bureau, adobe]).map((g) => g.name)).toEqual(["Adobe", "Bureau Vallée"]);
+    expect(stepOrder([bureau, adobe]).map((g) => g.name)).toEqual(["Adobe", "Bureau Vallée"]);
+  });
 });
 
 describe("stepOrder", () => {

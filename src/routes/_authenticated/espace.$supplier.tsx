@@ -88,6 +88,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
   const isSale = group.direction === "in";
   const collect = isSale ? dossier.data?.collect_email_customers : dossier.data?.collect_email;
   const noun = isSale ? "encaissement" : "paiement";
+  const thisOne = isSale ? "cet encaissement" : "ce paiement";
   const plural = (n: number) => (n > 1 ? "s" : "");
   const refresh = () => qc.invalidateQueries({ queryKey: ["client-txs"] });
   const toggle = (id: string, on: boolean) =>
@@ -245,7 +246,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
               {selected.length === 0
                 ? "Sélectionnez au moins une ligne ci-dessus"
                 : selected.length === 1
-                  ? `Pour ce ${noun}, comment souhaitez-vous procéder ?`
+                  ? `Pour ${thisOne}, comment souhaitez-vous procéder ?`
                   : `Pour ces ${selected.length} ${noun}s, comment souhaitez-vous procéder ?`}
             </h2>
             <p className="mt-1 text-muted-foreground">Choisissez la solution la plus simple pour vous.</p>
@@ -296,7 +297,7 @@ function SupplierStep({ steps, idx, dossierId }: { steps: SupplierGroup[]; idx: 
                   className="mt-2 bg-card md:text-base" />
                 <NoInvoiceWarning text={isSale ? NO_INVOICE_NOTE_SALE : NO_INVOICE_WARNING} />
                 <Button size="xl" className="mt-5" disabled={busy} onClick={markNoInvoice}>
-                  Je confirme : pas de facture pour {selected.length > 1 ? `ces ${selected.length} ${noun}s` : `ce ${noun}`}
+                  Je confirme : pas de facture pour {selected.length > 1 ? `ces ${selected.length} ${noun}s` : thisOne}
                 </Button>
               </ChoiceCard>
             </div>
