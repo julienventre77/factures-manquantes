@@ -1,15 +1,16 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { AlertTriangle, BookmarkCheck, Check, Plus, Sparkles, Trash2, X } from "lucide-react";
+import { AlertTriangle, BookmarkCheck, Check, Plus, Send, Sparkles, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/StatusPill";
 import { formatUsd } from "@/lib/analysis";
+import { compteAchatValide, libellePcg } from "@/lib/pcg";
 import { STATE_LABEL, ecartPaiement } from "@/lib/saisie";
-import { getSaisie, lireFacture, rejeterSaisie, validerSaisie } from "@/lib/saisie.functions";
+import { envoyerPennylane, getSaisie, lireFacture, rejeterSaisie, validerSaisie } from "@/lib/saisie.functions";
 import { formatDate, formatEUR } from "@/lib/session";
 import { alertes, controle, ecriture, round2, tvaLigne, type Facture, type Ligne } from "@/lib/ventilation";
 
@@ -25,7 +26,7 @@ export function SaisieAugmentee({ uploadId, onClose }: { uploadId: string | null
       <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><Sparkles className="h-5 w-5 text-primary" /> Saisie augmentée</DialogTitle>
-          <DialogDescription>Claude lit la facture et propose un compte par nature. Vous validez. Rien n'est écrit dans Pennylane.</DialogDescription>
+          <DialogDescription>Claude lit la facture et propose un compte par nature. Vous validez. Sur un dossier démo, vous pouvez ensuite envoyer la facture et son PDF dans Pennylane.</DialogDescription>
         </DialogHeader>
         {uploadId && <Content key={uploadId} uploadId={uploadId} />}
       </DialogContent>
@@ -66,7 +67,7 @@ function Content({ uploadId }: { uploadId: string }) {
       {s?.state === "proposee" ? (
         <Editor saisie={s} paiement={d.paiement.montant} onDone={() => q.refetch()} />
       ) : s?.state === "validee" ? (
-        <Validated saisie={s} paiement={d.paiement.montant} />
+        <Validated saisie={s} paiement={d.paiement.montant} envoiPossible={d.envoiPossible} onDone={() => q.refetch()} />
       ) : (
         <div className="space-y-3 rounded-xl border bg-muted/40 p-4 text-sm">
           {s?.state === "echec" && <p className="text-destructive">La dernière lecture n'a pas abouti : vous pouvez réessayer.</p>}
@@ -78,7 +79,7 @@ function Content({ uploadId }: { uploadId: string }) {
           ) : (
             <>
               <p>
-                Claude lit chaque ligne de la facture, puis l'appli propose les comptes (mémoire du fournisseur d'abord), la part en 486 pour une prestation
+                Claude lit chaque ligne de la facture et choisit son compte dans le plan de comptes ANC au 1er janvier 2026, avec le motif (la mémoire du fournisseur passe d'abord), puis l'appli calcule la part en 486 pour une prestation
                 sur plusieurs mois et le contrôle HT + TVA = TTC. Coût : quelques centimes, compté dans le plafond mensuel Claude
                 ({formatUsd(d.spent)} dépensés sur {formatUsd(d.cap)} ce mois-ci).
               </p>
@@ -110,7 +111,12 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
       const n = { ...l, ...patch };
       // A changed amount or rate replaces the VAT read on the invoice.
       if ("ht" in patch || "tauxTva" in patch) n.tvaMontant = round2(n.ht * n.tauxTva);
-      if ("compte" in patch) delete n.memorisee;
+      // A changed account takes the chart wording; the reason given for the proposed account no longer applies.
+      if ("compte" in patch) {
+        delete n.memorisee;
+        n.compteLibelle = libellePcg(n.compte);
+        n.motif = "Compte saisi par le cabinet.";
+      }
       return n;
     }));
   const add = () => setLignes((ls) => [...ls, { id: `m${Date.now()}`, compte: "", compteLibelle: "", libelle: "", ht: 0, tauxTva: 0.2, tvaMontant: 0 }]);
@@ -119,7 +125,7 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
     setBusy(true);
     try {
       const r = await validerSaisie({ data: { id: saisie.id, libelleEcriture: libelle, lignes, forcer } });
-      toast.success(`Saisie validée${r.regles ? `, ${r.regles} compte(s) mémorisé(s) pour ce fournisseur` : ""}. Rien n'a été écrit dans Pennylane.`);
+      toast.success(`Saisie validée${r.regles ? `, ${r.regles} compte(s) mémorisé(s) pour ce fournisseur` : ""}. Rien n'est encore envoyé dans Pennylane.`);
       onDone();
     } catch (e) {
       toast.error((e as Error).message);
@@ -166,12 +172,15 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
                 <td className="px-2 py-2">
                   <Input aria-label="Compte" className="h-8 w-28 font-mono" inputMode="numeric" value={l.compte}
                     onChange={(e) => edit(l.id, { compte: e.target.value.trim() })} />
-                  <div className="mt-1 max-w-[9rem] text-xs text-muted-foreground">{l.compteLibelle}</div>
+                  {compteAchatValide(l.compte)
+                    ? <div className="mt-1 max-w-[9rem] text-xs text-muted-foreground">{l.compteLibelle}</div>
+                    : <div className="mt-1 max-w-[9rem] text-xs font-semibold text-destructive">Absent du plan de comptes ANC 2026 (comptes d'achat)</div>}
                   {l.memorisee && <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary"><BookmarkCheck className="h-3 w-3" /> mémorisé</span>}
                 </td>
                 <td className="px-2 py-2">
                   <Input aria-label="Libellé de ligne" className="h-8" value={l.libelle} onChange={(e) => edit(l.id, { libelle: e.target.value })} />
                   {l.designation && l.designation !== l.libelle && <div className="mt-1 text-xs text-muted-foreground">Sur la facture : {l.designation}</div>}
+                  {l.motif && <div className="mt-1 text-xs italic text-muted-foreground">Pourquoi ce compte : {l.motif}</div>}
                 </td>
                 <td className="px-2 py-2">
                   <Input aria-label="Montant HT" type="number" step="0.01" className="h-8 w-28 text-right tabular-nums" value={l.ht}
@@ -206,25 +215,61 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
             <Checkbox checked={forcer} onCheckedChange={(v) => setForcer(v === true)} /> Valider malgré l'écart
           </label>
         )}
-        <Button onClick={valider} disabled={busy || (!c.ok && !forcer)}><Check /> Valider la saisie</Button>
+        <Button onClick={valider} disabled={busy || (!c.ok && !forcer) || !lignes.every((l) => compteAchatValide(l.compte))}><Check /> Valider la saisie</Button>
         <Button variant="outline" onClick={rejeter} disabled={busy}><X /> Rejeter</Button>
-        <span className="text-xs text-muted-foreground">Lecture : {formatUsd(saisie.cost)}. L'écriture dans Pennylane viendra dans une étape suivante.</span>
+        <span className="text-xs text-muted-foreground">Lecture : {formatUsd(saisie.cost)}. L'envoi dans Pennylane se fait après validation.</span>
       </div>
     </div>
   );
 }
 
-function Validated({ saisie, paiement }: { saisie: Saisie; paiement: number }) {
+function Validated({ saisie, paiement, envoiPossible, onDone }: { saisie: Saisie; paiement: number; envoiPossible: boolean; onDone: () => void }) {
   const f = asFacture(saisie, saisie.lignes, saisie.libelleEcriture);
+  const [confirmer, setConfirmer] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  // Writes to Pennylane: a second click confirms the sending.
+  async function envoyer() {
+    setBusy(true);
+    try {
+      const r = await envoyerPennylane({ data: { id: saisie.id } });
+      toast.success(`Facture importée dans Pennylane avec son PDF (n° ${r.invoiceId}).`);
+      onDone();
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+      setConfirmer(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Header saisie={saisie} />
       <p className="text-sm"><span className="font-semibold">Libellé d'écriture :</span> {saisie.libelleEcriture}</p>
       <Checks facture={f} paiement={paiement} />
       <EntryPreview facture={f} />
-      <p className="text-xs text-muted-foreground">
-        Validée{saisie.decidedAt ? ` le ${formatDate(saisie.decidedAt.slice(0, 10))}` : ""}. Elle n'a pas été écrite dans Pennylane.
-      </p>
+      {saisie.pennylaneInvoiceId ? (
+        <p className="text-sm font-semibold text-primary">
+          Importée dans Pennylane avec son PDF (facture fournisseur n° {saisie.pennylaneInvoiceId}){saisie.envoyeLe ? ` le ${formatDate(saisie.envoyeLe.slice(0, 10))}` : ""}.
+        </p>
+      ) : envoiPossible ? (
+        <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+          {confirmer ? (
+            <>
+              <span className="text-sm">La facture, ses lignes et son PDF vont être créés dans le dossier Pennylane. Confirmez-vous ?</span>
+              <Button onClick={envoyer} disabled={busy}><Send /> {busy ? "Envoi en cours…" : "Confirmer l'envoi"}</Button>
+              <Button variant="outline" onClick={() => setConfirmer(false)} disabled={busy}>Annuler</Button>
+            </>
+          ) : (
+            <Button onClick={() => setConfirmer(true)}><Send /> Envoyer dans Pennylane</Button>
+          )}
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          Validée{saisie.decidedAt ? ` le ${formatDate(saisie.decidedAt.slice(0, 10))}` : ""}. L'envoi dans Pennylane n'est proposé que pour une facture PDF d'un dossier démo du hackathon.
+        </p>
+      )}
     </div>
   );
 }
@@ -259,18 +304,19 @@ function Checks({ facture, paiement }: { facture: Facture; paiement: number }) {
   );
 }
 
+// The full purchase entry, always visible: expense lines, deductible VAT (44562 / 44566) and supplier debt (401).
 function EntryPreview({ facture }: { facture: Facture }) {
   const e = ecriture(facture);
   return (
-    <details className="rounded-xl border p-3 text-sm">
-      <summary className="cursor-pointer font-semibold">Aperçu de l'écriture d'achat {e.equilibree ? "(équilibrée)" : "(déséquilibrée)"}</summary>
+    <section className="rounded-xl border p-3 text-sm" aria-label="Écriture d'achat">
+      <h3 className="font-semibold">Écriture d'achat {e.equilibree ? "(équilibrée)" : "(déséquilibrée)"}</h3>
       <table className="mt-2 w-full">
         <thead className="text-left text-muted-foreground">
           <tr><th scope="col" className="py-1">Compte</th><th scope="col" className="py-1">Libellé</th><th scope="col" className="py-1 text-right">Débit</th><th scope="col" className="py-1 text-right">Crédit</th></tr>
         </thead>
-        <tbody>
+        <tbody className="divide-y">
           {e.lignes.map((l, i) => (
-            <tr key={i}>
+            <tr key={i} className={l.credit ? "font-semibold" : undefined}>
               <td className="py-1 font-mono">{l.compte}</td>
               <td className="py-1">{l.libelle}</td>
               <td className="py-1 text-right tabular-nums">{l.debit ? formatEUR(l.debit) : ""}</td>
@@ -278,7 +324,14 @@ function EntryPreview({ facture }: { facture: Facture }) {
             </tr>
           ))}
         </tbody>
+        <tfoot className="border-t font-bold">
+          <tr>
+            <td className="py-1" colSpan={2}>Totaux</td>
+            <td className="py-1 text-right tabular-nums">{formatEUR(e.totalDebit)}</td>
+            <td className="py-1 text-right tabular-nums">{formatEUR(e.totalCredit)}</td>
+          </tr>
+        </tfoot>
       </table>
-    </details>
+    </section>
   );
 }

@@ -47,6 +47,19 @@ describe("ventilation", () => {
 });
 
 describe("écriture avec dette fournisseur", () => {
+  it("passe la TVA d'une immobilisation en 44562 et le reste en 44566", () => {
+    const f = { ...loyer, totalHt: 1215, totalTva: 243, totalTtc: 1458,
+      lignes: [
+        { id: "a", compte: "2183", compteLibelle: "", libelle: "Ordinateur", ht: 1200, tauxTva: 0.2 },
+        { id: "b", compte: "6063", compteLibelle: "", libelle: "Tapis", ht: 15, tauxTva: 0.2 },
+      ] };
+    const e = ecriture(f);
+    expect(e.lignes.filter((l) => l.compte.startsWith("445"))).toEqual([
+      { compte: "44562", libelle: "TVA déductible sur immobilisations", debit: 240, credit: 0 },
+      { compte: "44566", libelle: "TVA déductible sur autres biens et services", debit: 3, credit: 0 },
+    ]);
+    expect(e.equilibree).toBe(true);
+  });
   it("crédite le 401 du TTC et s'équilibre", () => {
     const e = ecriture(loyer, "401100037");
     expect(e.lignes.at(-1)).toMatchObject({ compte: "401100037", credit: 1440 });

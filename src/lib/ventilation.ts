@@ -15,6 +15,8 @@ export type Ligne = {
   designation?: string;
   /** Compte repris d'une saisie validée pour ce fournisseur. */
   memorisee?: boolean;
+  /** Pourquoi ce compte : mémoire, choix motivé selon le plan de comptes, ou règle par mots-clés. */
+  motif?: string;
 };
 
 export type Facture = {
@@ -77,11 +79,20 @@ export function alertes(lignes: Ligne[]) {
   return out;
 }
 
-/** Écriture d'achat complète : débits charges + TVA, crédit dette fournisseur TTC (401). */
+/** Compte de TVA déductible d'une ligne (PCG) : 44562 sur immobilisations, 44566 sur autres biens et services. */
+export const compteTva = (l: Pick<Ligne, "compte">) => (l.compte.startsWith("2") ? "44562" : "44566");
+const LIBELLE_TVA: Record<string, string> = {
+  "44562": "TVA déductible sur immobilisations",
+  "44566": "TVA déductible sur autres biens et services",
+};
+
+/** Écriture d'achat complète : débits charges + TVA (44562 / 44566), crédit dette fournisseur TTC (401). */
 export function ecriture(f: Facture, compteFournisseur = "401") {
-  const t = totaux(f.lignes);
   const debits = f.lignes.map((l) => ({ compte: l.compte, libelle: l.libelle, debit: l.ht, credit: 0 }));
-  if (t.tva) debits.push({ compte: "44566", libelle: "TVA déductible", debit: t.tva, credit: 0 });
+  for (const c of ["44562", "44566"]) {
+    const tva = round2(f.lignes.filter((l) => compteTva(l) === c).reduce((s, l) => s + tvaLigne(l), 0));
+    if (tva) debits.push({ compte: c, libelle: LIBELLE_TVA[c]!, debit: tva, credit: 0 });
+  }
   const credit = { compte: compteFournisseur, libelle: `Dette fournisseur ${f.fournisseur}`, debit: 0, credit: f.totalTtc };
   const lignes = [...debits, credit];
   const totalDebit = round2(debits.reduce((s, l) => s + l.debit, 0));
