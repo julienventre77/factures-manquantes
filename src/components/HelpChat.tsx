@@ -70,7 +70,7 @@ export function HelpChat({ groupKey, raised = false }: { groupKey?: string | nul
         onSubmit={submit}
         remaining={remaining}
         taRef={taRef}
-        privacyNote="Vos questions sont traitées par un service d'intelligence artificielle (Anthropic). Ne saisissez pas de données sensibles."
+        privacyNote="Vos questions, et sur la page d'un fournisseur ou d'un client ses paiements (dates, montants, libellés sans IBAN), sont traités par un service d'intelligence artificielle (Anthropic). Ne saisissez pas de données sensibles."
         renderExtra={(m) =>
           m.escalate && m.question ? (
             <Button size="sm" variant="outline" className="mt-2" disabled={sent.has(m.id)} onClick={() => forward(m)}>
@@ -88,7 +88,7 @@ export function RobotButton({ raised = false, onClick }: { raised?: boolean; onC
   return (
     <button
       type="button"
-      aria-label="Ouvrir l'assistant"
+      aria-label="Besoin d'aide ? Ouvrir l'assistant"
       onClick={onClick}
       className={`group fixed right-5 z-40 flex items-center gap-3 rounded-full focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary ${raised ? "bottom-24" : "bottom-5"}`}
     >
@@ -140,7 +140,7 @@ export function ChatPanel({
           {msgs.map((m) => (
             <div key={m.id} className={m.role === "user" ? "ml-8 rounded-2xl rounded-br-md bg-primary p-3 text-sm text-primary-foreground" : "mr-4 rounded-2xl rounded-bl-md bg-pale-2 p-3 text-sm"}>
               {m.role === "user" ? m.content : (
-                <div className="prose prose-sm max-w-none text-foreground"><SafeMarkdown>{m.content}</SafeMarkdown></div>
+                <div className="text-foreground [&_a]:font-semibold [&_a]:text-primary [&_a]:underline [&_a]:underline-offset-2 [&_h1]:mt-2 [&_h2]:mt-2 [&_h3]:mt-2 [&_li+li]:mt-1 [&_ol]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_p+p]:mt-2 [&_ul]:my-2 [&_ul]:list-disc [&_ul]:pl-5"><SafeMarkdown>{m.content}</SafeMarkdown></div>
               )}
               {renderExtra?.(m)}
             </div>

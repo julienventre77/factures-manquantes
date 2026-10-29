@@ -30,7 +30,7 @@ export function QuestionsPanel({ dossierId }: { dossierId: string }) {
       </h2>
       <div className="mt-3 space-y-3">
         {list.map((x) => (
-          <div key={x.id} className={`rounded-lg border p-3 ${x.handled ? "opacity-70" : ""}`}>
+          <div key={x.id} className={`rounded-lg border p-3 ${x.handled ? "bg-muted/40" : ""}`}>
             <div className="mb-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
               {new Date(x.created_at).toLocaleString("fr-FR")} · {x.user_email}
               {x.context && <Badge variant="outline">{x.context.replace(/^achat:/, "Fournisseur : ").replace(/^vente:/, "Client : ")}</Badge>}
