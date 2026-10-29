@@ -18,3 +18,5 @@
 - Never store third-party supplier credentials (GDPR requirement).
 - Pennylane sync uses the MCP server first (`src/lib/mcp.server.ts`, OAuth tokens AES-GCM-encrypted in locked table `mcp_connection`), API v2 only as fallback — one detection function shared by both so results stay identical.
 - pkce-challenge is aliased in vite.config.ts to its browser build because it exports no workerd condition (build fails otherwise).
+- "Ne plus demander" rules live in `skip_rules` (per dossier, label words or supplier). `applySkipRules()` (sync.server.ts) runs after each sync and on rule creation: only open `pending` lines with no `skip_rule_id` are set to `dismissed`, so lines already sent, or reactivated by the cabinet, are left alone. Deleting a rule puts its still-dismissed lines back to `pending`.
+- Firm identity (name, e-mail, phone, logo) is the single row `cabinet_settings` (id = 1), readable by anon because the client sign-in page shows it; logo in public bucket `logos`, written by the cabinet only. Read it with `useCabinet()` (src/lib/cabinet.ts).
