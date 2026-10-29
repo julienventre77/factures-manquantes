@@ -6,9 +6,9 @@ const reponse = (over: Record<string, unknown> = {}) => JSON.stringify({
   lisible: true, fournisseur: "Atelier Numérique", numero: "F-2026-1042", date: "2026-10-08",
   libelle_ecriture: "Matériel informatique octobre 2026", total_ht: 1455, total_tva: 291, total_ttc: 1746,
   lignes: [
-    { designation: "Ordinateur portable 14 pouces", description: "", quantite: 1, prix_unitaire_ht: 1200, montant_ht: 1200, taux_tva: 0.2, debut: "", fin: "" },
-    { designation: "Tapis de souris textile", description: "", quantite: 1, prix_unitaire_ht: 15, montant_ht: 15, taux_tva: 20, debut: "", fin: "" },
-    { designation: "Extension de garantie", description: "24 mois", quantite: 24, prix_unitaire_ht: 10, montant_ht: 240, taux_tva: 0.2, debut: "2026-10-08", fin: "2028-10-07" },
+    { designation: "Ordinateur portable 14 pouces", description: "", quantite: 1, prix_unitaire_ht: 1200, montant_ht: 1200, taux_tva: 0.2, debut: "", fin: "", compte: "2183", motif: "Matériel informatique durable (art. 211-6)." },
+    { designation: "Tapis de souris textile", description: "", quantite: 1, prix_unitaire_ht: 15, montant_ht: 15, taux_tva: 20, debut: "", fin: "", compte: "", motif: "" },
+    { designation: "Extension de garantie", description: "24 mois", quantite: 24, prix_unitaire_ht: 10, montant_ht: 240, taux_tva: 0.2, debut: "2026-10-08", fin: "2028-10-07", compte: "6156", motif: "Maintenance du matériel." },
   ],
   ...over,
 });
@@ -42,6 +42,17 @@ describe("proposition", () => {
   it("reprend le compte mémorisé pour le fournisseur", () => {
     const f = proposer(lecture, { regles: [{ cle: "tapis de souris textile", compte: "60632", compte_libelle: "Petit matériel" }], dateRepli: "2026-10-10", fournisseur: "ATELIER" });
     expect(f.lignes[1]).toMatchObject({ compte: "60632", memorisee: true });
+  });
+  it("garde le compte choisi dans le plan, avec son motif", () => {
+    const f = proposer(lecture, { regles: [], dateRepli: "2026-10-10", fournisseur: "ATELIER" });
+    expect(f.lignes[0]).toMatchObject({ compte: "2183", compteLibelle: "Matériel de bureau et matériel informatique", motif: "Matériel informatique durable (art. 211-6)." });
+    expect(f.lignes[1]).toMatchObject({ compte: "6063", motif: "Règle par mots-clés." });
+  });
+  it("écarte un compte hors plan ou hors achats et revient aux règles", () => {
+    const l = { ...lecture, lignes: lecture.lignes.map((x, i) => (i === 0 ? { ...x, compte: "999" } : i === 2 ? { ...x, compte: "401" } : x)) };
+    const f = proposer(l, { regles: [], dateRepli: "2026-10-10", fournisseur: "ATELIER" });
+    expect(f.lignes.map((x) => x.compte)).toEqual(["2183", "6063", "6156", "486"]);
+    expect(f.lignes[0]!.motif).toBe("Règle par mots-clés.");
   });
   it("prend la date du paiement si la facture n'en a pas", () => {
     const f = proposer({ ...lecture, date: null }, { regles: [], dateRepli: "2026-10-10", fournisseur: "ATELIER" });
@@ -79,5 +90,7 @@ describe("contrôles", () => {
     const l = { id: "a", compte: "6063", compteLibelle: "", libelle: "x", ht: 1, tauxTva: 0.2 };
     expect(LigneSaisie.safeParse(l).success).toBe(true);
     expect(LigneSaisie.safeParse({ ...l, compte: "60A3" }).success).toBe(false);
+    expect(LigneSaisie.safeParse({ ...l, compte: "999" }).success).toBe(false);
+    expect(LigneSaisie.safeParse({ ...l, compte: "401" }).success).toBe(false);
   });
 });

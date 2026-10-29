@@ -15,6 +15,8 @@ export type Ligne = {
   designation?: string;
   /** Compte repris d'une saisie validée pour ce fournisseur. */
   memorisee?: boolean;
+  /** Pourquoi ce compte : mémoire, choix motivé selon le plan de comptes, ou règle par mots-clés. */
+  motif?: string;
 };
 
 export type Facture = {

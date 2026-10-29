@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Pill } from "@/components/StatusPill";
 import { formatUsd } from "@/lib/analysis";
+import { compteAchatValide, libellePcg } from "@/lib/pcg";
 import { STATE_LABEL, ecartPaiement } from "@/lib/saisie";
 import { getSaisie, lireFacture, rejeterSaisie, validerSaisie } from "@/lib/saisie.functions";
 import { formatDate, formatEUR } from "@/lib/session";
@@ -78,7 +79,7 @@ function Content({ uploadId }: { uploadId: string }) {
           ) : (
             <>
               <p>
-                Claude lit chaque ligne de la facture, puis l'appli propose les comptes (mémoire du fournisseur d'abord), la part en 486 pour une prestation
+                Claude lit chaque ligne de la facture et choisit son compte dans le plan de comptes ANC au 1er janvier 2026, avec le motif (la mémoire du fournisseur passe d'abord), puis l'appli calcule la part en 486 pour une prestation
                 sur plusieurs mois et le contrôle HT + TVA = TTC. Coût : quelques centimes, compté dans le plafond mensuel Claude
                 ({formatUsd(d.spent)} dépensés sur {formatUsd(d.cap)} ce mois-ci).
               </p>
@@ -110,7 +111,12 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
       const n = { ...l, ...patch };
       // A changed amount or rate replaces the VAT read on the invoice.
       if ("ht" in patch || "tauxTva" in patch) n.tvaMontant = round2(n.ht * n.tauxTva);
-      if ("compte" in patch) delete n.memorisee;
+      // A changed account takes the chart wording; the reason given for the proposed account no longer applies.
+      if ("compte" in patch) {
+        delete n.memorisee;
+        n.compteLibelle = libellePcg(n.compte);
+        n.motif = "Compte saisi par le cabinet.";
+      }
       return n;
     }));
   const add = () => setLignes((ls) => [...ls, { id: `m${Date.now()}`, compte: "", compteLibelle: "", libelle: "", ht: 0, tauxTva: 0.2, tvaMontant: 0 }]);
@@ -166,12 +172,15 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
                 <td className="px-2 py-2">
                   <Input aria-label="Compte" className="h-8 w-28 font-mono" inputMode="numeric" value={l.compte}
                     onChange={(e) => edit(l.id, { compte: e.target.value.trim() })} />
-                  <div className="mt-1 max-w-[9rem] text-xs text-muted-foreground">{l.compteLibelle}</div>
+                  {compteAchatValide(l.compte)
+                    ? <div className="mt-1 max-w-[9rem] text-xs text-muted-foreground">{l.compteLibelle}</div>
+                    : <div className="mt-1 max-w-[9rem] text-xs font-semibold text-destructive">Absent du plan de comptes ANC 2026 (comptes d'achat)</div>}
                   {l.memorisee && <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-primary"><BookmarkCheck className="h-3 w-3" /> mémorisé</span>}
                 </td>
                 <td className="px-2 py-2">
                   <Input aria-label="Libellé de ligne" className="h-8" value={l.libelle} onChange={(e) => edit(l.id, { libelle: e.target.value })} />
                   {l.designation && l.designation !== l.libelle && <div className="mt-1 text-xs text-muted-foreground">Sur la facture : {l.designation}</div>}
+                  {l.motif && <div className="mt-1 text-xs italic text-muted-foreground">Pourquoi ce compte : {l.motif}</div>}
                 </td>
                 <td className="px-2 py-2">
                   <Input aria-label="Montant HT" type="number" step="0.01" className="h-8 w-28 text-right tabular-nums" value={l.ht}
@@ -206,7 +215,7 @@ function Editor({ saisie, paiement, onDone }: { saisie: Saisie; paiement: number
             <Checkbox checked={forcer} onCheckedChange={(v) => setForcer(v === true)} /> Valider malgré l'écart
           </label>
         )}
-        <Button onClick={valider} disabled={busy || (!c.ok && !forcer)}><Check /> Valider la saisie</Button>
+        <Button onClick={valider} disabled={busy || (!c.ok && !forcer) || !lignes.every((l) => compteAchatValide(l.compte))}><Check /> Valider la saisie</Button>
         <Button variant="outline" onClick={rejeter} disabled={busy}><X /> Rejeter</Button>
         <span className="text-xs text-muted-foreground">Lecture : {formatUsd(saisie.cost)}. L'écriture dans Pennylane viendra dans une étape suivante.</span>
       </div>
