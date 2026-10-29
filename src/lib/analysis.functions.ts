@@ -76,7 +76,7 @@ export const getAnalysisState = createServerFn({ method: "POST" })
       db.from("ai_suggestions").select("id, kind, transaction_ids, target_supplier, reason, created_at")
         .eq("dossier_id", data.dossierId).eq("state", "open").order("created_at", { ascending: true }),
       db.from("ai_analysis_runs").select("id, created_at, lines_analyzed, cost_usd")
-        .eq("dossier_id", data.dossierId).order("created_at", { ascending: false }).limit(5),
+        .eq("dossier_id", data.dossierId).eq("kind", "analyse").order("created_at", { ascending: false }).limit(5),
       budget(db),
     ]);
     const byId = new Map(lines.map((t) => [t.id, t]));

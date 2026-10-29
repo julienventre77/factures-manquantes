@@ -169,9 +169,14 @@ export async function syncDossier(dossierId: string) {
         await db.from("dossiers").update({ last_mcp_error: e.message }).eq("id", dossierId);
         throw e;
       }
-      mcpError = e instanceof mcp.McpUnavailable ? (e as Error).message : (e as Error).message.slice(0, 200);
-      console.error("MCP sync failed, API fallback");
-      source = "API (secours)";
+      if (e instanceof mcp.McpNotDemo) {
+        // Expected for every non-demo dossier: the API is its normal source, not a fallback.
+        source = "API";
+      } else {
+        mcpError = e instanceof mcp.McpUnavailable ? (e as Error).message : (e as Error).message.slice(0, 200);
+        console.error("MCP sync failed, API fallback");
+        source = "API (secours)";
+      }
       result = await fetchViaApi(dossier, since);
     }
     const { needed, counterparts, unletteredElsewhere } = result;
