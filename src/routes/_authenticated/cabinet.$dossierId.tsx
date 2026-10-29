@@ -12,6 +12,7 @@ import { LinesTable } from "@/components/LinesTable";
 import { QuestionsPanel } from "@/components/QuestionsPanel";
 import { SkipRulesPanel } from "@/components/SkipRulesPanel";
 import { CabinetChat } from "@/components/CabinetChat";
+import { ClaudeAnalysis } from "@/components/ClaudeAnalysis";
 import { SourcePill } from "@/components/StatusPill";
 import { createClientAccount } from "@/lib/admin.functions";
 import { syncDossierNow } from "@/lib/sync.functions";
@@ -143,6 +144,7 @@ function DossierPage() {
         )}
 
         <QuestionsPanel dossierId={dossierId} />
+        <ClaudeAnalysis dossierId={dossierId} onApplied={reload} />
         <LinesTable txs={txs} uploads={uploads} onChanged={reload} onRename={rename} onDownload={download} />
         <SkipRulesPanel dossierId={dossierId} txs={txs} onChanged={reload} />
 
