@@ -29,7 +29,8 @@ Vous pouvez souvent obtenir un duplicata auprès du fournisseur. Votre comptable
 // For a sale, the missing document is the client's own invoice: guidance only, no tax rule.
 export const NO_INVOICE_NOTE_SALE = `À savoir : pour un encaissement, la pièce attendue est la facture (ou le justificatif de vente) que vous avez établie pour votre client.
 – Si vous l'avez émise, vous la retrouverez dans votre logiciel de facturation ou dans vos e-mails envoyés : vous pouvez la déposer ou la transférer.
-– S'il ne s'agit pas d'une vente (apport, prêt, virement entre vos comptes, remboursement d'un fournisseur…), précisez-le dans le commentaire.
+– S'il s'agit d'un remboursement d'un fournisseur, déposez plutôt l'avoir qu'il vous a adressé (choix 1).
+– S'il ne s'agit pas d'une vente (apport, prêt, virement entre vos comptes…), précisez-le dans le commentaire.
 Votre comptable reviendra vers vous si besoin.`;
 
 const ACCEPT = "application/pdf,image/jpeg,image/png";

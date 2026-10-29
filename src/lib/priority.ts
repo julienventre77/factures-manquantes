@@ -29,7 +29,8 @@ export function prioritize(groups: SupplierGroup[]): SupplierGroup[] {
 // so it uses each group's whole amount and oldest payment, not what is left to do.
 export function stepOrder(groups: SupplierGroup[]): SupplierGroup[] {
   const oldest = (g: SupplierGroup) => g.txs.reduce((d, t) => (t.date < d ? t.date : d), "9999-12-31");
-  return [...groups].sort((a, b) => b.total - a.total || oldest(a).localeCompare(oldest(b)) || a.name.localeCompare(b.name, "fr"));
+  const cents = (g: SupplierGroup) => Math.round(g.total * 100);
+  return [...groups].sort((a, b) => cents(b) - cents(a) || oldest(a).localeCompare(oldest(b)) || a.name.localeCompare(b.name, "fr"));
 }
 
 // Case, accents and spaces are ignored; "389.90" and "389,90" are the same amount.

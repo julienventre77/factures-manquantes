@@ -70,18 +70,20 @@ function DossierPage() {
     window.open(data.signedUrl, "_blank");
   }
 
-  async function rename(detected: string, current: string) {
+  // Resolves to the new name, or null when nothing changed.
+  async function rename(detected: string, current: string): Promise<string | null> {
     const name = window.prompt(`Nom du fournisseur pour « ${detected} »`, current)?.trim();
-    if (!name || name === current) return;
+    if (!name || name === current) return null;
     await supabase.from("supplier_aliases").upsert(
       { dossier_id: dossierId, detected_name: detected, display_name: name },
       { onConflict: "dossier_id,detected_name" },
     );
     const { error } = await supabase.from("transactions").update({ supplier: name })
       .eq("dossier_id", dossierId).eq("supplier_detected", detected);
-    if (error) { toast.error(error.message); return; }
+    if (error) { toast.error(error.message); return null; }
     toast.success("Regroupement mis à jour");
     reload();
+    return name;
   }
 
   if (!q.data)

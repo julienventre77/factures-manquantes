@@ -41,6 +41,12 @@ describe("stepOrder", () => {
     expect(before).toEqual(["A", "B", "C"]);
     expect(stepOrder([c, aDone, b]).map((g) => g.name)).toEqual(before);
   });
+  it("treats totals equal to the cent as a tie, whatever the order of the lines", () => {
+    const amazon = group("Amazon", [tx({ amount: -36.41, date: "2026-01-02" }), tx({ amount: -2.58, date: "2026-01-02" }), tx({ amount: -1.01, date: "2026-01-02" })]);
+    const boulanger = group("Boulanger", [tx({ amount: -40, date: "2026-03-05" })]);
+    expect(amazon.total).not.toBe(40);
+    expect(stepOrder([boulanger, amazon]).map((g) => g.name)).toEqual(["Amazon", "Boulanger"]);
+  });
   it("breaks ties with the oldest payment, then the name", () => {
     const recent = group("Récent", [tx({ amount: -20, date: "2026-05-01" })]);
     const old = group("Ancien", [tx({ amount: -20, date: "2026-01-15" })]);
