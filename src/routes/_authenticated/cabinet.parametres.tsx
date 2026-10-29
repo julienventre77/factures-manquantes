@@ -9,7 +9,7 @@ import { Monogram } from "@/components/brand";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DEFAULT_CABINET, LOGO_BUCKET, cabinetQuery, logoPublicUrl } from "@/lib/cabinet";
+import { DEFAULT_CABINET, LOGO_BUCKET, cabinetQuery, useCabinet } from "@/lib/cabinet";
 import { requireCabinet } from "@/lib/session";
 
 export const Route = createFileRoute("/_authenticated/cabinet/parametres")({
@@ -45,6 +45,7 @@ function SettingsPage() {
   const [file, setFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const saved = useCabinet();
 
   useEffect(() => {
     if (!q.data) return;
@@ -111,7 +112,7 @@ function SettingsPage() {
     name: f.name.trim() || DEFAULT_CABINET.name,
     email: f.email.trim(),
     phone: f.phone.trim(),
-    logoUrl: filePreview ?? logoPublicUrl(logoPath),
+    logoUrl: filePreview ?? (logoPath && logoPath === q.data?.logo_path ? saved.logoUrl : null),
   };
 
   return (
@@ -170,7 +171,7 @@ function SettingsPage() {
                   )}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  PNG, JPG ou WebP, 1 Mo au plus. Sans logo, les initiales du cabinet sont affichées. Le logo est public, comme le reste de la page de connexion.
+                  PNG, JPG ou WebP, 1 Mo au plus. Sans logo, les initiales du cabinet sont affichées. Le logo est visible sur la page de connexion, comme le nom du cabinet.
                 </p>
               </div>
 
