@@ -21,6 +21,7 @@ export type Database = {
           dossier_id: string
           id: string
           input_tokens: number
+          kind: string
           lines_analyzed: number
           model: string
           output_tokens: number
@@ -32,6 +33,7 @@ export type Database = {
           dossier_id: string
           id?: string
           input_tokens?: number
+          kind?: string
           lines_analyzed: number
           model: string
           output_tokens?: number
@@ -43,6 +45,7 @@ export type Database = {
           dossier_id?: string
           id?: string
           input_tokens?: number
+          kind?: string
           lines_analyzed?: number
           model?: string
           output_tokens?: number
@@ -392,6 +395,141 @@ export type Database = {
           state?: string
         }
         Relationships: []
+      }
+      regles_fournisseur: {
+        Row: {
+          cle: string
+          compte: string
+          compte_libelle: string
+          dossier_id: string
+          id: string
+          tiers: string
+          updated_at: string
+        }
+        Insert: {
+          cle: string
+          compte: string
+          compte_libelle?: string
+          dossier_id: string
+          id?: string
+          tiers: string
+          updated_at?: string
+        }
+        Update: {
+          cle?: string
+          compte?: string
+          compte_libelle?: string
+          dossier_id?: string
+          id?: string
+          tiers?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regles_fournisseur_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      saisies: {
+        Row: {
+          cost_usd: number
+          created_at: string
+          date_facture: string | null
+          decided_at: string | null
+          decided_by: string | null
+          dossier_id: string
+          fournisseur: string
+          id: string
+          lecture: Json | null
+          libelle_ecriture: string | null
+          lignes: Json
+          lu_le: string
+          lu_par: string | null
+          model: string | null
+          numero: string | null
+          state: string
+          tiers: string
+          total_ht: number
+          total_ttc: number
+          total_tva: number
+          transaction_id: string
+          upload_id: string
+        }
+        Insert: {
+          cost_usd?: number
+          created_at?: string
+          date_facture?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          dossier_id: string
+          fournisseur: string
+          id?: string
+          lecture?: Json | null
+          libelle_ecriture?: string | null
+          lignes?: Json
+          lu_le?: string
+          lu_par?: string | null
+          model?: string | null
+          numero?: string | null
+          state?: string
+          tiers: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          transaction_id: string
+          upload_id: string
+        }
+        Update: {
+          cost_usd?: number
+          created_at?: string
+          date_facture?: string | null
+          decided_at?: string | null
+          decided_by?: string | null
+          dossier_id?: string
+          fournisseur?: string
+          id?: string
+          lecture?: Json | null
+          libelle_ecriture?: string | null
+          lignes?: Json
+          lu_le?: string
+          lu_par?: string | null
+          model?: string | null
+          numero?: string | null
+          state?: string
+          tiers?: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          transaction_id?: string
+          upload_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saisies_dossier_id_fkey"
+            columns: ["dossier_id"]
+            isOneToOne: false
+            referencedRelation: "dossiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saisies_transaction_id_fkey"
+            columns: ["transaction_id"]
+            isOneToOne: false
+            referencedRelation: "transactions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "saisies_upload_id_fkey"
+            columns: ["upload_id"]
+            isOneToOne: true
+            referencedRelation: "uploads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       skip_rules: {
         Row: {

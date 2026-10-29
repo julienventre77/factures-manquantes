@@ -85,6 +85,13 @@
       "when": 1793246342469,
       "tag": "0011_skip_rules_cabinet_settings_align",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1793256713872,
+      "tag": "0012_saisie_augmentee",
+      "breakpoints": true
     }
   ]
 }
