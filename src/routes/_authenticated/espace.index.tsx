@@ -12,7 +12,7 @@ import { SupplierAvatar } from "@/components/brand";
 import { FilterChip } from "@/components/FilterChip";
 import { GroupStatePill } from "@/components/StatusPill";
 import { Button } from "@/components/ui/button";
-import { CABINET } from "@/lib/cabinet";
+import { useCabinet } from "@/lib/cabinet";
 import { matchesSearch, prioritize, txHaystack } from "@/lib/priority";
 import { meQuery, groupBySupplier, formatEUR, type SupplierGroup, type Tx } from "@/lib/session";
 import { cn } from "@/lib/utils";
@@ -75,6 +75,7 @@ function counterparts(groups: SupplierGroup[]) {
 const todoCount = (g: SupplierGroup) => g.txs.filter((t) => t.status === "a_faire").length;
 
 function Espace() {
+  const cabinet = useCabinet();
   const { me, txs, dossierId } = useClientTxs();
   const dossier = useClientDossier(dossierId);
   const [query, setQuery] = useState("");
@@ -264,9 +265,9 @@ function Espace() {
           </>
         )}
 
-        {(CABINET.email || CABINET.phone) && (
+        {(cabinet.email || cabinet.phone) && (
           <div className="mt-12 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
-            Une question ? {CABINET.name} vous répond : <CabinetContact />
+            Une question ? {cabinet.name} vous répond : <CabinetContact />
           </div>
         )}
       </main>

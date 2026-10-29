@@ -6,7 +6,7 @@ import { ArrowRight, Briefcase, Eye, EyeOff, FileX, Mail, ShieldCheck, Upload } 
 import { supabase } from "@/integrations/supabase/client";
 import { getBootstrapStatus, bootstrapCabinet } from "@/lib/admin.functions";
 import { meQuery } from "@/lib/session";
-import { CABINET } from "@/lib/cabinet";
+import { useCabinet } from "@/lib/cabinet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ const FEATURES = [
 type Space = "client" | "cabinet";
 
 export function LoginForm({ space }: { space: Space }) {
+  const cabinet = useCabinet();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const [email, setEmail] = useState("");
@@ -168,8 +169,8 @@ export function LoginForm({ space }: { space: Space }) {
         <div className="grid flex-1 content-center gap-8 lg:grid-cols-2 lg:gap-x-16">
           <div className="lg:col-start-1 lg:row-start-1 lg:self-end">
             <div className="flex items-center gap-3">
-              <Monogram name={CABINET.name} className="h-14 w-14 text-base" />
-              <span className="text-lg font-bold text-primary">{CABINET.name}</span>
+              <Monogram name={cabinet.name} logoUrl={cabinet.logoUrl} className="h-14 w-14 text-base" />
+              <span className="text-lg font-bold text-primary">{cabinet.name}</span>
             </div>
             <h1 className="mt-8 text-4xl sm:text-5xl">Espace client</h1>
             <p className="mt-3 text-lg text-muted-foreground sm:text-xl">Transmettez vos factures manquantes en quelques minutes</p>
@@ -188,9 +189,9 @@ export function LoginForm({ space }: { space: Space }) {
                 </li>
               ))}
             </ul>
-            {(CABINET.email || CABINET.phone) && (
+            {(cabinet.email || cabinet.phone) && (
               <div className="mt-8 rounded-2xl border bg-card/70 p-4">
-                <p className="text-sm">Une question ? <strong>{CABINET.name}</strong> vous répond.</p>
+                <p className="text-sm">Une question ? <strong>{cabinet.name}</strong> vous répond.</p>
                 <CabinetContact className="mt-2" />
               </div>
             )}

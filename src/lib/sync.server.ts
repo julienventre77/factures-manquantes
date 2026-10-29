@@ -1,4 +1,5 @@
 import { normalizeSupplier } from "./supplier";
+import { findRule, type SkipRule } from "./skip-rules";
 
 const BASE = "https://app.pennylane.com/api/external/v2";
 const LOOKBACK_DAYS = 365;
@@ -214,17 +215,52 @@ export async function syncDossier(dossierId: string) {
       .filter((e) => !(unletteredElsewhere.has(e.pennylane_id) && e.review_state === "sent" && e.status !== "a_faire"))
       .map((e) => e.id);
     if (close.length) await db.from("transactions").update({ is_open: false }).in("id", close);
+    const skipped = await applySkipRules(dossierId);
 
     await db
       .from("dossiers")
       .update({ last_sync_at: new Date().toISOString(), last_sync_error: null, last_sync_source: source, last_mcp_error: mcpError })
       .eq("id", dossierId);
-    return { added: inserts.length, closed: close.length, open: needed.length, source };
+    return { added: inserts.length, closed: close.length, open: needed.length, skipped, source };
   } catch (e) {
     const msg = (e as Error).message;
     await db.from("dossiers").update({ last_sync_error: msg }).eq("id", dossierId);
     throw new Error(msg);
   }
+}
+
+// Lot 3: open lines awaiting review that match a "ne plus demander" rule are set aside.
+// Lines already sent to the client are left alone, and so are lines the cabinet
+// reactivated after a rule dismissed them (skip_rule_id still set).
+export async function applySkipRules(dossierId: string) {
+  const { supabaseAdmin: db } = await import("@/integrations/supabase/client.server");
+  const { data: rules, error: rErr } = await db.from("skip_rules").select("id, kind, pattern, direction").eq("dossier_id", dossierId);
+  if (rErr) {
+    // Rules table not migrated yet: the sync must keep working without rules.
+    console.error("Skip rules unavailable", rErr.message);
+    return 0;
+  }
+  if (!rules?.length) return 0;
+  const { data: pending, error: tErr } = await db
+    .from("transactions")
+    .select("id, label, supplier, supplier_detected, direction")
+    .eq("dossier_id", dossierId)
+    .eq("is_open", true)
+    .eq("review_state", "pending")
+    .is("skip_rule_id", null);
+  if (tErr) throw tErr;
+  const byRule = new Map<string, string[]>();
+  for (const t of pending ?? []) {
+    const r = findRule(rules as SkipRule[], { ...t, direction: t.direction === "in" ? "in" : "out" });
+    if (r) byRule.set(r.id, [...(byRule.get(r.id) ?? []), t.id]);
+  }
+  let count = 0;
+  for (const [ruleId, ids] of byRule) {
+    const { error } = await db.from("transactions").update({ review_state: "dismissed", skip_rule_id: ruleId }).in("id", ids);
+    if (error) throw error;
+    count += ids.length;
+  }
+  return count;
 }
 
 export async function syncAllDossiers() {
