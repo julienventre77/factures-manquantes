@@ -90,33 +90,6 @@ export type Database = {
           },
         ]
       }
-      cabinet_settings: {
-        Row: {
-          email: string | null
-          id: number
-          logo_path: string | null
-          name: string
-          phone: string | null
-          updated_at: string
-        }
-        Insert: {
-          email?: string | null
-          id?: number
-          logo_path?: string | null
-          name?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Update: {
-          email?: string | null
-          id?: number
-          logo_path?: string | null
-          name?: string
-          phone?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
       chat_messages: {
         Row: {
           content: string
@@ -274,44 +247,6 @@ export type Database = {
         }
         Relationships: []
       }
-      skip_rules: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          direction: string | null
-          dossier_id: string
-          id: string
-          kind: string
-          pattern: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          direction?: string | null
-          dossier_id: string
-          id?: string
-          kind: string
-          pattern: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          direction?: string | null
-          dossier_id?: string
-          id?: string
-          kind?: string
-          pattern?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "skip_rules_dossier_id_fkey"
-            columns: ["dossier_id"]
-            isOneToOne: false
-            referencedRelation: "dossiers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       supplier_aliases: {
         Row: {
           detected_name: string
@@ -355,7 +290,6 @@ export type Database = {
           label: string
           pennylane_id: string
           review_state: string
-          skip_rule_id: string | null
           status: Database["public"]["Enums"]["tx_status"]
           supplier: string
           supplier_detected: string
@@ -374,7 +308,6 @@ export type Database = {
           label: string
           pennylane_id: string
           review_state?: string
-          skip_rule_id?: string | null
           status?: Database["public"]["Enums"]["tx_status"]
           supplier: string
           supplier_detected: string
@@ -393,20 +326,12 @@ export type Database = {
           label?: string
           pennylane_id?: string
           review_state?: string
-          skip_rule_id?: string | null
           status?: Database["public"]["Enums"]["tx_status"]
           supplier?: string
           supplier_detected?: string
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "transactions_skip_rule_id_fkey"
-            columns: ["skip_rule_id"]
-            isOneToOne: false
-            referencedRelation: "skip_rules"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "transactions_dossier_id_fkey"
             columns: ["dossier_id"]
